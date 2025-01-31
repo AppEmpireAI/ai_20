@@ -1,8 +1,8 @@
+import 'package:flutter/cupertino.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ai_20/core/bloc/plant_bloc.dart';
 import 'package:ai_20/core/constants/theme/app_theme.dart';
 import 'package:ai_20/core/models/plant_data_models.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 class LightingDetailsSheet extends StatelessWidget {
   final Plant plant;
@@ -18,7 +18,7 @@ class LightingDetailsSheet extends StatelessWidget {
         backgroundColor: AppTheme.backgroundLight,
         border: null,
         middle: Text(
-          'Освещение',
+          'Lighting',
           style: AppTheme.headlineMedium,
         ),
         leading: CupertinoButton(
@@ -37,31 +37,32 @@ class LightingDetailsSheet extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _buildSection(
-                      title: 'Оптимальные условия',
+                      title: 'Optimal Conditions',
                       content: state.recommendations['optimal_conditions'],
                       icon: CupertinoIcons.sun_max,
                     ),
                     const SizedBox(height: AppTheme.paddingMedium),
                     _buildSection(
-                      title: 'Размещение',
+                      title: 'Placement',
                       content: state.recommendations['placement'],
                       icon: CupertinoIcons.home,
                     ),
                     const SizedBox(height: AppTheme.paddingMedium),
                     _buildSection(
-                      title: 'Расстояние от источников света',
+                      title: 'Distance from Light Sources',
                       content: state.recommendations['distance_guide'],
                       icon: CupertinoIcons.resize_h,
                     ),
                     const SizedBox(height: AppTheme.paddingMedium),
                     _buildSection(
-                      title: 'Сезонные изменения',
+                      title: 'Seasonal Adjustments',
                       content: state.recommendations['seasonal_adjustments'],
                       icon: CupertinoIcons.calendar,
                     ),
                     const SizedBox(height: AppTheme.paddingMedium),
                     _buildWarningSection(
-                      warnings: state.recommendations['warning_signs'] as List<dynamic>,
+                      warnings: state.recommendations['warning_signs']
+                          as List<dynamic>,
                     ),
                   ],
                 ),
@@ -75,7 +76,7 @@ class LightingDetailsSheet extends StatelessWidget {
             }
 
             return const Center(
-              child: Text('Не удалось загрузить рекомендации'),
+              child: Text('Failed to load recommendations'),
             );
           },
         ),
@@ -111,9 +112,7 @@ class LightingDetailsSheet extends StatelessWidget {
           ),
           const SizedBox(height: AppTheme.paddingSmall),
           Text(
-            content is String
-                ? content
-                : content.toString(),
+            content is String ? content : content.toString(),
             style: AppTheme.bodyMedium,
           ),
         ],
@@ -144,7 +143,7 @@ class LightingDetailsSheet extends StatelessWidget {
               ),
               const SizedBox(width: AppTheme.paddingSmall),
               Text(
-                'На что обратить внимание',
+                'What to Watch For',
                 style: AppTheme.bodyLarge.copyWith(
                   fontWeight: FontWeight.bold,
                   color: CupertinoColors.destructiveRed,
@@ -154,27 +153,27 @@ class LightingDetailsSheet extends StatelessWidget {
           ),
           const SizedBox(height: AppTheme.paddingSmall),
           ...warnings.map((warning) => Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '• ',
-                  style: AppTheme.bodyMedium.copyWith(
-                    color: CupertinoColors.destructiveRed,
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    warning.toString(),
-                    style: AppTheme.bodyMedium.copyWith(
-                      color: CupertinoColors.destructiveRed,
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '• ',
+                      style: AppTheme.bodyMedium.copyWith(
+                        color: CupertinoColors.destructiveRed,
+                      ),
                     ),
-                  ),
+                    Expanded(
+                      child: Text(
+                        warning.toString(),
+                        style: AppTheme.bodyMedium.copyWith(
+                          color: CupertinoColors.destructiveRed,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          )),
+              )),
         ],
       ),
     );

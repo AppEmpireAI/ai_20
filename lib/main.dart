@@ -1,37 +1,49 @@
-import 'package:ai_20/core/bloc/plant_bloc.dart';
-import 'package:ai_20/core/constants/theme/app_theme.dart';
-import 'package:ai_20/core/models/plant_data_models.dart';
-import 'package:ai_20/core/services/ai_service.dart';
-import 'package:ai_20/features/main/pages/plant_catalog_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hive/hive.dart';
+import 'package:ai_20/core/bloc/plant_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:ai_20/core/services/ai_service.dart';
+import 'package:ai_20/core/bloc/onboarding_bloc.dart';
+import 'package:ai_20/core/models/onboarding_state.dart';
+import 'package:ai_20/core/models/plant_data_models.dart';
+import 'package:ai_20/core/constants/theme/app_theme.dart';
+import 'package:ai_20/features/main/pages/settings_screen.dart';
+import 'package:ai_20/features/main/pages/onboarding_screen.dart';
+import 'package:ai_20/features/main/pages/plant_catalog_screen.dart';
+import 'package:ai_20/features/main/pages/growth_journal_screen.dart';
+import 'package:ai_20/features/main/pages/plant_recognition_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Hive.initFlutter();
+
   Hive.registerAdapter(PlantAdapter());
   Hive.registerAdapter(GrowthEntryAdapter());
   Hive.registerAdapter(WateringScheduleAdapter());
+  Hive.registerAdapter(OnboardingStateAdapter());
 
   final plantBox = await Hive.openBox<Plant>('plants');
+  final onboardingBox = await Hive.openBox<OnboardingState>('onboarding');
+
   final aiService = PlantAIService().init();
 
   runApp(MyApp(
     plantBox: plantBox,
+    onboardingBox: onboardingBox,
     aiService: aiService,
   ));
 }
 
 class MyApp extends StatelessWidget {
   final Box<Plant> plantBox;
+  final Box<OnboardingState> onboardingBox;
   final PlantAIService aiService;
 
   const MyApp({
     super.key,
     required this.plantBox,
+    required this.onboardingBox,
     required this.aiService,
   });
 
@@ -45,9 +57,15 @@ class MyApp extends StatelessWidget {
             aiService: aiService,
           )..add(LoadPlants()),
         ),
+        BlocProvider(
+          create: (context) => OnboardingBloc(
+            onboardingBox: onboardingBox,
+          ),
+        ),
       ],
       child: CupertinoApp(
-        title: 'Мой зелёный уголок',
+        title: 'My green corner',
+        debugShowCheckedModeBanner: false,
         theme: const CupertinoThemeData(
           primaryColor: AppTheme.primaryGreen,
           scaffoldBackgroundColor: AppTheme.backgroundLight,
@@ -55,7 +73,23 @@ class MyApp extends StatelessWidget {
             primaryColor: AppTheme.textDark,
           ),
         ),
-        home: const MainScreen(),
+        home: BlocBuilder<OnboardingBloc, OnboardingStatus>(
+          builder: (context, state) {
+            // Initial state - check onboarding status
+            if (state is OnboardingInitial) {
+              context.read<OnboardingBloc>().add(CheckOnboardingStatus());
+              return const CupertinoActivityIndicator();
+            }
+
+            // Show onboarding for first-time users
+            if (state is OnboardingRequired) {
+              return const OnboardingScreen();
+            }
+
+            // Show main app for returning users
+            return const MainScreen();
+          },
+        ),
       ),
     );
   }
@@ -73,20 +107,32 @@ class MainScreen extends StatelessWidget {
         inactiveColor: AppTheme.textLight,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.house_fill),
-            label: 'Каталог',
+            icon: Icon(
+              CupertinoIcons.house_fill,
+              size: 20,
+            ),
+            label: 'Catalog',
           ),
           BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.camera_fill),
-            label: 'Распознать',
+            icon: Icon(
+              CupertinoIcons.camera_fill,
+              size: 20,
+            ),
+            label: 'Recognize',
           ),
           BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.chart_bar_fill),
-            label: 'Журнал',
+            icon: Icon(
+              CupertinoIcons.chart_bar_fill,
+              size: 20,
+            ),
+            label: 'Journal',
           ),
           BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.settings),
-            label: 'Настройки',
+            icon: Icon(
+              CupertinoIcons.settings,
+              size: 20,
+            ),
+            label: 'Settings',
           ),
         ],
       ),
@@ -97,11 +143,11 @@ class MainScreen extends StatelessWidget {
               case 0:
                 return const PlantCatalogScreen();
               case 1:
-                return const PlantCatalogScreen(); //PlantRecognitionScreen
+                return const PlantRecognitionScreen();
               case 2:
-                return const PlantCatalogScreen(); //GrowthJournalScreen
+                return const GrowthJournalScreen();
               case 3:
-                return const PlantCatalogScreen(); //SettingsScreen
+                return const SettingsScreen();
               default:
                 return const SizedBox.shrink();
             }

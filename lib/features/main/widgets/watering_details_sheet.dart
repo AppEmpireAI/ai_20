@@ -1,13 +1,14 @@
+import 'package:flutter/cupertino.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ai_20/core/bloc/plant_bloc.dart';
 import 'package:ai_20/core/constants/theme/app_theme.dart';
 import 'package:ai_20/core/models/plant_data_models.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 class WateringDetailsSheet extends StatefulWidget {
   final Plant plant;
 
   const WateringDetailsSheet({
+    super.key,
     required this.plant,
   });
 
@@ -31,7 +32,7 @@ class _WateringDetailsSheetState extends State<WateringDetailsSheet> {
         backgroundColor: AppTheme.backgroundLight,
         border: null,
         middle: Text(
-          'График полива',
+          'Watering Schedule',
           style: AppTheme.headlineMedium,
         ),
         leading: CupertinoButton(
@@ -41,7 +42,7 @@ class _WateringDetailsSheetState extends State<WateringDetailsSheet> {
         ),
         trailing: CupertinoButton(
           padding: EdgeInsets.zero,
-          child: const Text('Сохранить'),
+          child: const Text('Save'),
           onPressed: _saveChanges,
         ),
       ),
@@ -77,7 +78,7 @@ class _WateringDetailsSheetState extends State<WateringDetailsSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Текущий график',
+            'Current Schedule',
             style: AppTheme.bodyLarge.copyWith(
               fontWeight: FontWeight.bold,
             ),
@@ -90,7 +91,7 @@ class _WateringDetailsSheetState extends State<WateringDetailsSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Следующий полив:',
+                    'Next Watering:',
                     style: AppTheme.bodyMedium,
                   ),
                   Text(
@@ -109,7 +110,8 @@ class _WateringDetailsSheetState extends State<WateringDetailsSheet> {
                 ),
                 decoration: BoxDecoration(
                   color: AppTheme.primaryGreen.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
+                  borderRadius:
+                      BorderRadius.circular(AppTheme.borderRadiusSmall),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -121,7 +123,7 @@ class _WateringDetailsSheetState extends State<WateringDetailsSheet> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'Каждые ${widget.plant.wateringSchedule.frequencyDays} ${_getDaysWord(widget.plant.wateringSchedule.frequencyDays)}',
+                      'Every ${widget.plant.wateringSchedule.frequencyDays} ${_getDaysWord(widget.plant.wateringSchedule.frequencyDays)}',
                       style: AppTheme.bodyMedium.copyWith(
                         color: AppTheme.primaryGreen,
                         fontWeight: FontWeight.bold,
@@ -145,7 +147,7 @@ class _WateringDetailsSheetState extends State<WateringDetailsSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Частота полива',
+            'Watering Frequency',
             style: AppTheme.bodyLarge.copyWith(
               fontWeight: FontWeight.bold,
             ),
@@ -189,7 +191,7 @@ class _WateringDetailsSheetState extends State<WateringDetailsSheet> {
               ),
               const SizedBox(width: AppTheme.paddingSmall),
               Text(
-                'Советы по поливу',
+                'Watering Tips',
                 style: AppTheme.bodyLarge.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -198,23 +200,24 @@ class _WateringDetailsSheetState extends State<WateringDetailsSheet> {
           ),
           const SizedBox(height: AppTheme.paddingSmall),
           Text(
-            widget.plant.careGuide['watering'] ?? 'Нет рекомендаций',
+            widget.plant.careGuide['watering'] ??
+                'No recommendations available',
             style: AppTheme.bodyMedium,
           ),
           const SizedBox(height: AppTheme.paddingMedium),
           _buildWateringTip(
             icon: CupertinoIcons.drop,
-            tip: 'Используйте отстоянную воду комнатной температуры',
+            tip: 'Use room temperature distilled water',
           ),
           const SizedBox(height: AppTheme.paddingSmall),
           _buildWateringTip(
             icon: CupertinoIcons.sun_dust,
-            tip: 'Поливайте утром или вечером, избегая прямых солнечных лучей',
+            tip: 'Water in the morning or evening, avoiding direct sunlight',
           ),
           const SizedBox(height: AppTheme.paddingSmall),
           _buildWateringTip(
             icon: CupertinoIcons.hand_raised,
-            tip: 'Проверяйте влажность почвы перед каждым поливом',
+            tip: 'Check soil moisture before each watering',
           ),
         ],
       ),
@@ -253,7 +256,7 @@ class _WateringDetailsSheetState extends State<WateringDetailsSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'История полива',
+            'Watering History',
             style: AppTheme.bodyLarge.copyWith(
               fontWeight: FontWeight.bold,
             ),
@@ -261,7 +264,7 @@ class _WateringDetailsSheetState extends State<WateringDetailsSheet> {
           const SizedBox(height: AppTheme.paddingSmall),
           Center(
             child: Text(
-              'История полива будет отображаться здесь',
+              'Watering history will be displayed here',
               style: AppTheme.bodyMedium.copyWith(
                 color: AppTheme.textLight,
               ),
@@ -281,21 +284,21 @@ class _WateringDetailsSheetState extends State<WateringDetailsSheet> {
       );
 
       context.read<PlantBloc>().add(
-        UpdateWateringSchedule(widget.plant.id, newSchedule),
-      );
+            UpdateWateringSchedule(widget.plant.id, newSchedule),
+          );
 
       showCupertinoDialog(
         context: context,
         builder: (context) => CupertinoAlertDialog(
-          title: const Text('График обновлен'),
+          title: const Text('Schedule Updated'),
           content: Text(
-            'Теперь полив будет каждые $_selectedFrequency ${_getDaysWord(_selectedFrequency)}',
+            'Watering will now be every $_selectedFrequency ${_getDaysWord(_selectedFrequency)}',
           ),
           actions: [
             CupertinoDialogAction(
               onPressed: () {
-                Navigator.pop(context); // закрываем диалог
-                Navigator.pop(context); // закрываем sheet
+                Navigator.pop(context); // close dialog
+                Navigator.pop(context); // close sheet
               },
               child: const Text('OK'),
             ),
@@ -313,11 +316,12 @@ class _WateringDetailsSheetState extends State<WateringDetailsSheet> {
 
   String _getDaysWord(int days) {
     if (days % 10 == 1 && days % 100 != 11) {
-      return 'день';
-    } else if ([2, 3, 4].contains(days % 10) && ![12, 13, 14].contains(days % 100)) {
-      return 'дня';
+      return 'day';
+    } else if ([2, 3, 4].contains(days % 10) &&
+        ![12, 13, 14].contains(days % 100)) {
+      return 'days';
     } else {
-      return 'дней';
+      return 'days';
     }
   }
 }

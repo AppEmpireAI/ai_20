@@ -1,16 +1,10 @@
 # ai_20
 
-A new Flutter project.
+Приложение «Мой зелёный уголок» (Придумано GPT)
+Фичи:
 
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Каталог домашних растений – добавляйте свои цветы и получайте рекомендации по уходу.
+Напоминания о поливе – приложение уведомляет, когда пора поливать, удобрять или пересаживать растение.
+Распознавание растений – загружайте фото, и приложение подскажет, что это за цветок и как за ним ухаживать.
+Журнал роста – ведите заметки, добавляйте фото, отслеживайте, как развивается растение.
+Рекомендации по освещению – приложение подскажет, куда лучше поставить растение в доме.

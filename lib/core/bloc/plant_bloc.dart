@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:hive/hive.dart';
 
-// Events
 abstract class PlantEvent extends Equatable {
   const PlantEvent();
 
@@ -88,7 +87,6 @@ class UpdatePlantCareSchedule extends PlantEvent {
   List<Object?> get props => [plantId];
 }
 
-// States
 abstract class PlantState extends Equatable {
   const PlantState();
 
@@ -147,7 +145,6 @@ class PlantOperationFailure extends PlantState {
   List<Object?> get props => [error];
 }
 
-// BLoC
 class PlantBloc extends Bloc<PlantEvent, PlantState> {
   final Box<Plant> plantBox;
   final PlantAIService aiService;
@@ -187,7 +184,8 @@ class PlantBloc extends Bloc<PlantEvent, PlantState> {
     }
   }
 
-  Future<void> _onUpdatePlant(UpdatePlant event, Emitter<PlantState> emit) async {
+  Future<void> _onUpdatePlant(
+      UpdatePlant event, Emitter<PlantState> emit) async {
     try {
       await plantBox.put(event.plant.id, event.plant);
       final plants = plantBox.values.toList();
@@ -197,7 +195,8 @@ class PlantBloc extends Bloc<PlantEvent, PlantState> {
     }
   }
 
-  Future<void> _onDeletePlant(DeletePlant event, Emitter<PlantState> emit) async {
+  Future<void> _onDeletePlant(
+      DeletePlant event, Emitter<PlantState> emit) async {
     try {
       await plantBox.delete(event.plantId);
       final plants = plantBox.values.toList();
@@ -208,9 +207,9 @@ class PlantBloc extends Bloc<PlantEvent, PlantState> {
   }
 
   Future<void> _onAddGrowthEntry(
-      AddGrowthEntry event,
-      Emitter<PlantState> emit,
-      ) async {
+    AddGrowthEntry event,
+    Emitter<PlantState> emit,
+  ) async {
     try {
       final plant = plantBox.get(event.plantId);
       if (plant != null) {
@@ -227,9 +226,9 @@ class PlantBloc extends Bloc<PlantEvent, PlantState> {
   }
 
   Future<void> _onUpdateWateringSchedule(
-      UpdateWateringSchedule event,
-      Emitter<PlantState> emit,
-      ) async {
+    UpdateWateringSchedule event,
+    Emitter<PlantState> emit,
+  ) async {
     try {
       final plant = plantBox.get(event.plantId);
       if (plant != null) {
@@ -246,9 +245,9 @@ class PlantBloc extends Bloc<PlantEvent, PlantState> {
   }
 
   Future<void> _onRecognizePlant(
-      RecognizePlant event,
-      Emitter<PlantState> emit,
-      ) async {
+    RecognizePlant event,
+    Emitter<PlantState> emit,
+  ) async {
     emit(PlantsLoading());
     try {
       final result = await aiService.identifyPlant(event.imagePath);
@@ -259,9 +258,9 @@ class PlantBloc extends Bloc<PlantEvent, PlantState> {
   }
 
   Future<void> _onGetLightingRecommendations(
-      GetLightingRecommendations event,
-      Emitter<PlantState> emit,
-      ) async {
+    GetLightingRecommendations event,
+    Emitter<PlantState> emit,
+  ) async {
     emit(PlantsLoading());
     try {
       final plant = plantBox.get(event.plantId);
@@ -280,9 +279,9 @@ class PlantBloc extends Bloc<PlantEvent, PlantState> {
   }
 
   Future<void> _onUpdatePlantCareSchedule(
-      UpdatePlantCareSchedule event,
-      Emitter<PlantState> emit,
-      ) async {
+    UpdatePlantCareSchedule event,
+    Emitter<PlantState> emit,
+  ) async {
     emit(PlantsLoading());
     try {
       final plant = plantBox.get(event.plantId);

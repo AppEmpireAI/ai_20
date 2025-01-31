@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'package:dart_openai/dart_openai.dart';
+// ignore: depend_on_referenced_packages
 import 'package:collection/collection.dart';
 
 class PlantAIService {
@@ -67,7 +68,7 @@ Response must be a JSON object with:
       }
 
       final textItem = content.firstWhereOrNull(
-            (item) => item.type == 'text' && item.text != null,
+        (item) => item.type == 'text' && item.text != null,
       );
 
       if (textItem?.text == null) {
@@ -88,9 +89,9 @@ Response must be a JSON object with:
   }
 
   Future<Map<String, dynamic>> getPlantCareSchedule(
-      String plantName,
-      Map<String, dynamic> careRequirements,
-      ) async {
+    String plantName,
+    Map<String, dynamic> careRequirements,
+  ) async {
     final systemMessage = '''
 Create a detailed care schedule for: $plantName
 
@@ -141,7 +142,7 @@ Response must be a JSON object with:
       }
 
       final textItem = content.firstWhereOrNull(
-            (item) => item.type == 'text' && item.text != null,
+        (item) => item.type == 'text' && item.text != null,
       );
 
       if (textItem?.text == null) {
@@ -162,9 +163,9 @@ Response must be a JSON object with:
   }
 
   Future<Map<String, dynamic>> getLightingRecommendations(
-      String plantName,
-      Map<String, dynamic> lightRequirements,
-      ) async {
+    String plantName,
+    Map<String, dynamic> lightRequirements,
+  ) async {
     final systemMessage = '''
 Provide lighting recommendations for: $plantName
 
@@ -215,7 +216,7 @@ Response must be a JSON object with:
       }
 
       final textItem = content.firstWhereOrNull(
-            (item) => item.type == 'text' && item.text != null,
+        (item) => item.type == 'text' && item.text != null,
       );
 
       if (textItem?.text == null) {
@@ -226,7 +227,9 @@ Response must be a JSON object with:
     } catch (e) {
       log('Error generating lighting recommendations: ${e.toString()}');
       return {
-        'optimal_conditions': {'error': 'Unable to determine optimal conditions'},
+        'optimal_conditions': {
+          'error': 'Unable to determine optimal conditions'
+        },
         'placement': ['Service temporarily unavailable'],
         'distance_guide': {'error': 'Distance guide unavailable'},
         'seasonal_adjustments': {'error': 'Seasonal adjustments unavailable'},

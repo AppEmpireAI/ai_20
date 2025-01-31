@@ -1,18 +1,18 @@
 import 'dart:io';
-
+import 'package:ai_20/main.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ai_20/core/bloc/plant_bloc.dart';
+import '../../../core/constants/theme/app_theme.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:ai_20/core/models/plant_data_models.dart';
+import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:ai_20/features/main/widgets/edit_plant_sheet.dart';
 import 'package:ai_20/features/main/widgets/growth_entry_sheet.dart';
 import 'package:ai_20/features/main/widgets/lighting_details_sheet.dart';
 import 'package:ai_20/features/main/widgets/watering_details_sheet.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
-
-import '../../../core/constants/theme/app_theme.dart';
+import 'package:ai_20/features/main/widgets/cuprtino_sliver_hearder.dart';
 
 class PlantDetailsScreen extends StatefulWidget {
   final Plant plant;
@@ -60,11 +60,11 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
         border: null,
         middle: _isHeaderCollapsed
             ? Text(
-          widget.plant.name,
-          style: AppTheme.headlineMedium.copyWith(
-            color: AppTheme.primaryGreen,
-          ),
-        )
+                widget.plant.name,
+                style: AppTheme.headlineMedium.copyWith(
+                  color: AppTheme.primaryGreen,
+                ),
+              )
             : null,
         trailing: CupertinoButton(
           padding: EdgeInsets.zero,
@@ -86,56 +86,63 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
   }
 
   Widget _buildHeader() {
-    return SliverAppBar(
+    return CupertinoSliverHeader(
       expandedHeight: 300,
       backgroundColor: AppTheme.backgroundLight,
-      flexibleSpace: FlexibleSpaceBar(
-        background: Hero(
-          tag: 'plant_image_${widget.plant.id}',
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Image.file(
-                File(widget.plant.imageUrl),
-                fit: BoxFit.cover,
-              ),
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      AppTheme.primaryGreen.withOpacity(0.7),
-                    ],
+      background: Hero(
+        tag: 'plant_image_${widget.plant.id}',
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.file(
+              File(widget.plant.imageUrl),
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  color: AppTheme.lightGreen.withOpacity(0.1),
+                  child: const Icon(
+                    CupertinoIcons.leaf_arrow_circlepath,
+                    color: AppTheme.lightGreen,
                   ),
-                ),
-              ),
-              Positioned(
-                left: AppTheme.paddingMedium,
-                right: AppTheme.paddingMedium,
-                bottom: AppTheme.paddingMedium,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.plant.name,
-                      style: AppTheme.headlineLarge.copyWith(
-                        color: CupertinoColors.white,
-                      ),
-                    ),
-                    Text(
-                      widget.plant.species,
-                      style: AppTheme.bodyLarge.copyWith(
-                        color: CupertinoColors.white.withOpacity(0.8),
-                      ),
-                    ),
+                );
+              },
+            ),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    CupertinoColors.black.withOpacity(0.0),
+                    AppTheme.primaryGreen.withOpacity(0.7),
                   ],
                 ),
               ),
-            ],
-          ),
+            ),
+            Positioned(
+              left: AppTheme.paddingMedium,
+              right: AppTheme.paddingMedium,
+              bottom: AppTheme.paddingMedium,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.plant.name,
+                    style: AppTheme.headlineLarge.copyWith(
+                      color: CupertinoColors.white,
+                    ),
+                  ),
+                  Text(
+                    widget.plant.species,
+                    style: AppTheme.bodyLarge.copyWith(
+                      color: CupertinoColors.white.withOpacity(0.8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -153,13 +160,16 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
             _buildWateringSection(),
             const SizedBox(height: AppTheme.paddingMedium),
             _buildGrowthJournal(),
-          ].animate(interval: 100.milliseconds).fadeIn(
-            duration: AppTheme.animationNormal,
-          ).slideY(
-            begin: 0.2,
-            duration: AppTheme.animationNormal,
-            curve: Curves.easeOutQuad,
-          ),
+          ]
+              .animate(interval: 100.milliseconds)
+              .fadeIn(
+                duration: AppTheme.animationNormal,
+              )
+              .slideY(
+                begin: 0.2,
+                duration: AppTheme.animationNormal,
+                curve: Curves.easeOutQuad,
+              ),
         ),
       ),
     );
@@ -170,7 +180,7 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Уход за растением',
+          'Plant Care',
           style: AppTheme.headlineMedium,
         ),
         const SizedBox(height: AppTheme.paddingMedium),
@@ -181,22 +191,25 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
             children: [
               _buildCareItem(
                 icon: CupertinoIcons.sun_max,
-                title: 'Освещение',
-                content: widget.plant.lightingGuide['optimal_conditions'] ?? 'Нет данных',
+                title: 'Lighting',
+                content: widget.plant.lightingGuide['optimal_conditions'] ??
+                    'No data available',
                 onTap: () => _showLightingDetails(context),
               ),
               const Divider(height: AppTheme.paddingLarge),
               _buildCareItem(
                 icon: CupertinoIcons.drop,
-                title: 'Полив',
-                content: widget.plant.careGuide['watering'] ?? 'Нет данных',
+                title: 'Watering',
+                content:
+                    widget.plant.careGuide['watering'] ?? 'No data available',
                 onTap: () => _showWateringDetails(context),
               ),
               const Divider(height: AppTheme.paddingLarge),
               _buildCareItem(
                 icon: CupertinoIcons.thermometer,
-                title: 'Температура',
-                content: widget.plant.careGuide['temperature'] ?? 'Нет данных',
+                title: 'Temperature',
+                content: widget.plant.careGuide['temperature'] ??
+                    'No data available',
               ),
             ],
           ),
@@ -225,7 +238,7 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
               ),
               const SizedBox(width: AppTheme.paddingSmall),
               Text(
-                'Следующий полив',
+                'Next Watering',
                 style: AppTheme.bodyLarge.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -247,7 +260,7 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
                     ),
                   ),
                   Text(
-                    'Последний полив: ${_formatDate(widget.plant.lastWatered)}',
+                    'Last watered: ${_formatDate(widget.plant.lastWatered)}',
                     style: AppTheme.bodyMedium,
                   ),
                 ],
@@ -256,7 +269,7 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppTheme.paddingMedium,
                 ),
-                child: const Text('Полито'),
+                child: const Text('Watered'),
                 onPressed: () => _markAsWatered(context),
               ),
             ],
@@ -274,12 +287,12 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Журнал роста',
+              'Growth Journal',
               style: AppTheme.headlineMedium,
             ),
             CupertinoButton(
               padding: EdgeInsets.zero,
-              child: const Text('Добавить запись'),
+              child: const Text('Add Entry'),
               onPressed: () => _addGrowthEntry(context),
             ),
           ],
@@ -298,14 +311,14 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
                   ),
                   const SizedBox(height: AppTheme.paddingMedium),
                   Text(
-                    'Записей пока нет',
+                    'No entries yet',
                     style: AppTheme.bodyLarge.copyWith(
                       color: AppTheme.textMedium,
                     ),
                   ),
                   const SizedBox(height: AppTheme.paddingSmall),
                   Text(
-                    'Добавьте первую запись о росте вашего растения',
+                    'Add your first growth entry for your plant',
                     style: AppTheme.bodyMedium,
                     textAlign: TextAlign.center,
                   ),
@@ -397,7 +410,7 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        '${entry.height}см',
+                        '${entry.height} cm',
                         style: AppTheme.bodyMedium,
                       ),
                       const SizedBox(width: AppTheme.paddingMedium),
@@ -410,7 +423,7 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        '${entry.numberOfLeaves} лист.',
+                        '${entry.numberOfLeaves} leaves',
                         style: AppTheme.bodyMedium,
                       ),
                     ],
@@ -432,6 +445,15 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
                 height: 200,
                 width: double.infinity,
                 fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: AppTheme.lightGreen.withOpacity(0.1),
+                    child: const Icon(
+                      CupertinoIcons.leaf_arrow_circlepath,
+                      color: AppTheme.lightGreen,
+                    ),
+                  );
+                },
               ),
             ),
           ],
@@ -442,11 +464,11 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
 
   String _getWateringStatusText(int daysUntil) {
     if (daysUntil < 0) {
-      return 'Пропущен полив!';
+      return 'Missed watering!';
     } else if (daysUntil == 0) {
-      return 'Полить сегодня';
+      return 'Water today';
     } else {
-      return 'Через $daysUntil ${_getDaysWord(daysUntil)}';
+      return 'In $daysUntil ${_getDaysWord(daysUntil)}';
     }
   }
 
@@ -462,11 +484,12 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
 
   String _getDaysWord(int days) {
     if (days % 10 == 1 && days % 100 != 11) {
-      return 'день';
-    } else if ([2, 3, 4].contains(days % 10) && ![12, 13, 14].contains(days % 100)) {
-      return 'дня';
+      return 'day';
+    } else if ([2, 3, 4].contains(days % 10) &&
+        ![12, 13, 14].contains(days % 100)) {
+      return 'days';
     } else {
-      return 'дней';
+      return 'days';
     }
   }
 
@@ -484,14 +507,14 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
               Navigator.pop(context);
               _editPlant(context);
             },
-            child: const Text('Редактировать'),
+            child: const Text('Edit'),
           ),
           CupertinoActionSheetAction(
             onPressed: () {
               Navigator.pop(context);
               _showLightingDetails(context);
             },
-            child: const Text('Рекомендации по освещению'),
+            child: const Text('Lighting Recommendations'),
           ),
           CupertinoActionSheetAction(
             onPressed: () {
@@ -499,12 +522,12 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
               _deletePlant(context);
             },
             isDestructiveAction: true,
-            child: const Text('Удалить растение'),
+            child: const Text('Delete Plant'),
           ),
         ],
         cancelButton: CupertinoActionSheetAction(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Отмена'),
+          child: const Text('Cancel'),
         ),
       ),
     );
@@ -535,9 +558,9 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text('Отлично!'),
+        title: const Text('Great!'),
         content: Text(
-          'Следующий полив через ${plant.wateringSchedule.frequencyDays} ${_getDaysWord(plant.wateringSchedule.frequencyDays)}',
+          'Next watering in ${plant.wateringSchedule.frequencyDays} ${_getDaysWord(plant.wateringSchedule.frequencyDays)}',
         ),
         actions: [
           CupertinoDialogAction(
@@ -567,23 +590,26 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text('Удалить растение?'),
+        title: const Text('Delete Plant?'),
         content: const Text(
-          'Это действие нельзя будет отменить. Все данные о растении будут удалены.',
+          'This action cannot be undone. All plant data will be deleted.',
         ),
         actions: [
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Отмена'),
+            child: const Text('Cancel'),
           ),
           CupertinoDialogAction(
             onPressed: () {
               context.read<PlantBloc>().add(DeletePlant(widget.plant.id));
-              Navigator.pop(context); // Закрываем диалог
-              Navigator.pop(context); // Возвращаемся на предыдущий экран
+
+              Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => MainScreen()),
+                  (Route<dynamic> route) => false);
             },
             isDestructiveAction: true,
-            child: const Text('Удалить'),
+            child: const Text('Delete'),
           ),
         ],
       ),

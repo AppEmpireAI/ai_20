@@ -1,11 +1,10 @@
 import 'dart:io';
-
-import 'package:ai_20/core/bloc/plant_bloc.dart';
-import 'package:ai_20/core/constants/theme/app_theme.dart';
-import 'package:ai_20/core/models/plant_data_models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ai_20/core/bloc/plant_bloc.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:ai_20/core/constants/theme/app_theme.dart';
+import 'package:ai_20/core/models/plant_data_models.dart';
 
 class EditPlantSheet extends StatefulWidget {
   final Plant plant;
@@ -40,7 +39,7 @@ class _EditPlantSheetState extends State<EditPlantSheet> {
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(
-      source: ImageSource.camera,
+      source: ImageSource.gallery,
       maxWidth: 1200,
       maxHeight: 1200,
       imageQuality: 85,
@@ -60,7 +59,7 @@ class _EditPlantSheetState extends State<EditPlantSheet> {
         backgroundColor: AppTheme.backgroundLight,
         border: null,
         middle: Text(
-          'Редактировать растение',
+          'Edit Plant',
           style: AppTheme.headlineMedium,
         ),
         leading: CupertinoButton(
@@ -72,11 +71,9 @@ class _EditPlantSheetState extends State<EditPlantSheet> {
           padding: EdgeInsets.zero,
           onPressed: _canSave() ? _savePlant : null,
           child: Text(
-            'Сохранить',
+            'Save',
             style: TextStyle(
-              color: _canSave()
-                  ? AppTheme.primaryGreen
-                  : AppTheme.textLight,
+              color: _canSave() ? AppTheme.primaryGreen : AppTheme.textLight,
             ),
           ),
         ),
@@ -117,18 +114,19 @@ class _EditPlantSheetState extends State<EditPlantSheet> {
               borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
               child: _newImagePath != null
                   ? Image.file(
-                File(_newImagePath!),
-                fit: BoxFit.cover,
-              )
+                      File(_newImagePath!),
+                      fit: BoxFit.cover,
+                    )
                   : Image.file(
-                File(widget.plant.imageUrl),
-                fit: BoxFit.cover,
-              ),
+                      File(widget.plant.imageUrl),
+                      fit: BoxFit.cover,
+                    ),
             ),
             Container(
               decoration: BoxDecoration(
                 color: CupertinoColors.black.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
+                borderRadius:
+                    BorderRadius.circular(AppTheme.borderRadiusMedium),
               ),
               child: const Center(
                 child: Icon(
@@ -155,7 +153,7 @@ class _EditPlantSheetState extends State<EditPlantSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Название',
+                'Name',
                 style: AppTheme.bodyLarge.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -163,11 +161,12 @@ class _EditPlantSheetState extends State<EditPlantSheet> {
               const SizedBox(height: AppTheme.paddingSmall),
               CupertinoTextField(
                 controller: _nameController,
-                placeholder: 'Название растения',
+                placeholder: 'Plant Name',
                 padding: const EdgeInsets.all(AppTheme.paddingSmall),
                 decoration: BoxDecoration(
                   color: CupertinoColors.white,
-                  borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
+                  borderRadius:
+                      BorderRadius.circular(AppTheme.borderRadiusSmall),
                   border: Border.all(
                     color: AppTheme.primaryGreen.withOpacity(0.2),
                   ),
@@ -175,7 +174,7 @@ class _EditPlantSheetState extends State<EditPlantSheet> {
               ),
               const SizedBox(height: AppTheme.paddingMedium),
               Text(
-                'Вид',
+                'Species',
                 style: AppTheme.bodyLarge.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -183,11 +182,12 @@ class _EditPlantSheetState extends State<EditPlantSheet> {
               const SizedBox(height: AppTheme.paddingSmall),
               CupertinoTextField(
                 controller: _speciesController,
-                placeholder: 'Вид растения',
+                placeholder: 'Plant Species',
                 padding: const EdgeInsets.all(AppTheme.paddingSmall),
                 decoration: BoxDecoration(
                   color: CupertinoColors.white,
-                  borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
+                  borderRadius:
+                      BorderRadius.circular(AppTheme.borderRadiusSmall),
                   border: Border.all(
                     color: AppTheme.primaryGreen.withOpacity(0.2),
                   ),
@@ -201,7 +201,8 @@ class _EditPlantSheetState extends State<EditPlantSheet> {
   }
 
   bool _canSave() {
-    return _nameController.text.isNotEmpty && _speciesController.text.isNotEmpty;
+    return _nameController.text.isNotEmpty &&
+        _speciesController.text.isNotEmpty;
   }
 
   void _savePlant() {

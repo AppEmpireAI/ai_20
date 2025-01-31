@@ -1,16 +1,16 @@
 import 'dart:io';
-
-import 'package:ai_20/core/bloc/plant_bloc.dart';
-import 'package:ai_20/core/constants/theme/app_theme.dart';
-import 'package:ai_20/core/models/plant_data_models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:ai_20/core/bloc/plant_bloc.dart';
+import 'package:ai_20/core/constants/theme/app_theme.dart';
+import 'package:ai_20/core/models/plant_data_models.dart';
 
 class AddGrowthEntrySheet extends StatefulWidget {
   final String plantId;
 
   const AddGrowthEntrySheet({
+    super.key,
     required this.plantId,
   });
 
@@ -36,7 +36,7 @@ class _AddGrowthEntrySheetState extends State<AddGrowthEntrySheet> {
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(
-      source: ImageSource.camera,
+      source: ImageSource.gallery,
       maxWidth: 1200,
       maxHeight: 1200,
       imageQuality: 85,
@@ -56,7 +56,7 @@ class _AddGrowthEntrySheetState extends State<AddGrowthEntrySheet> {
         backgroundColor: AppTheme.backgroundLight,
         border: null,
         middle: Text(
-          'Новая запись',
+          'New Growth Entry',
           style: AppTheme.headlineMedium,
         ),
         leading: CupertinoButton(
@@ -68,11 +68,9 @@ class _AddGrowthEntrySheetState extends State<AddGrowthEntrySheet> {
           padding: EdgeInsets.zero,
           onPressed: _canSave() ? _saveEntry : null,
           child: Text(
-            'Сохранить',
+            'Save',
             style: TextStyle(
-              color: _canSave()
-                  ? AppTheme.primaryGreen
-                  : AppTheme.textLight,
+              color: _canSave() ? AppTheme.primaryGreen : AppTheme.textLight,
             ),
           ),
         ),
@@ -105,7 +103,7 @@ class _AddGrowthEntrySheetState extends State<AddGrowthEntrySheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Дата',
+            'Date',
             style: AppTheme.bodyLarge.copyWith(
               fontWeight: FontWeight.bold,
             ),
@@ -137,7 +135,7 @@ class _AddGrowthEntrySheetState extends State<AddGrowthEntrySheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Измерения',
+            'Measurements',
             style: AppTheme.bodyLarge.copyWith(
               fontWeight: FontWeight.bold,
             ),
@@ -150,7 +148,7 @@ class _AddGrowthEntrySheetState extends State<AddGrowthEntrySheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Высота (см)',
+                      'Height (cm)',
                       style: AppTheme.bodyMedium,
                     ),
                     const SizedBox(height: 4),
@@ -159,11 +157,15 @@ class _AddGrowthEntrySheetState extends State<AddGrowthEntrySheet> {
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
+                      onChanged: (_) {
+                        setState(() {});
+                      },
                       placeholder: '0.0',
                       padding: const EdgeInsets.all(AppTheme.paddingSmall),
                       decoration: BoxDecoration(
                         color: CupertinoColors.white,
-                        borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
+                        borderRadius:
+                            BorderRadius.circular(AppTheme.borderRadiusSmall),
                         border: Border.all(
                           color: AppTheme.primaryGreen.withOpacity(0.2),
                         ),
@@ -178,7 +180,7 @@ class _AddGrowthEntrySheetState extends State<AddGrowthEntrySheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Количество листьев',
+                      'Number of Leaves',
                       style: AppTheme.bodyMedium,
                     ),
                     const SizedBox(height: 4),
@@ -186,10 +188,14 @@ class _AddGrowthEntrySheetState extends State<AddGrowthEntrySheet> {
                       controller: _leavesController,
                       keyboardType: TextInputType.number,
                       placeholder: '0',
+                      onChanged: (_) {
+                        setState(() {});
+                      },
                       padding: const EdgeInsets.all(AppTheme.paddingSmall),
                       decoration: BoxDecoration(
                         color: CupertinoColors.white,
-                        borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
+                        borderRadius:
+                            BorderRadius.circular(AppTheme.borderRadiusSmall),
                         border: Border.all(
                           color: AppTheme.primaryGreen.withOpacity(0.2),
                         ),
@@ -213,7 +219,7 @@ class _AddGrowthEntrySheetState extends State<AddGrowthEntrySheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Заметка',
+            'Note',
             style: AppTheme.bodyLarge.copyWith(
               fontWeight: FontWeight.bold,
             ),
@@ -221,10 +227,13 @@ class _AddGrowthEntrySheetState extends State<AddGrowthEntrySheet> {
           const SizedBox(height: AppTheme.paddingSmall),
           CupertinoTextField(
             controller: _noteController,
-            placeholder: 'Опишите состояние растения...',
+            placeholder: 'Describe the plant’s condition...',
             padding: const EdgeInsets.all(AppTheme.paddingSmall),
             minLines: 3,
             maxLines: 5,
+            onChanged: (_) {
+              setState(() {});
+            },
             decoration: BoxDecoration(
               color: CupertinoColors.white,
               borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
@@ -253,55 +262,56 @@ class _AddGrowthEntrySheetState extends State<AddGrowthEntrySheet> {
         ),
         child: _selectedImage != null
             ? Stack(
-          fit: StackFit.expand,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
-              child: Image.file(
-                File(_selectedImage!),
-                fit: BoxFit.cover,
-              ),
-            ),
-            Positioned(
-              right: AppTheme.paddingSmall,
-              top: AppTheme.paddingSmall,
-              child: GestureDetector(
-                onTap: () => setState(() => _selectedImage = null),
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: CupertinoColors.black.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(
-                      AppTheme.borderRadiusSmall,
+                fit: StackFit.expand,
+                children: [
+                  ClipRRect(
+                    borderRadius:
+                        BorderRadius.circular(AppTheme.borderRadiusMedium),
+                    child: Image.file(
+                      File(_selectedImage!),
+                      fit: BoxFit.cover,
                     ),
                   ),
-                  child: const Icon(
-                    CupertinoIcons.xmark,
-                    color: CupertinoColors.white,
-                    size: 16,
+                  Positioned(
+                    right: AppTheme.paddingSmall,
+                    top: AppTheme.paddingSmall,
+                    child: GestureDetector(
+                      onTap: () => setState(() => _selectedImage = null),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: CupertinoColors.black.withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.borderRadiusSmall,
+                          ),
+                        ),
+                        child: const Icon(
+                          CupertinoIcons.xmark,
+                          color: CupertinoColors.white,
+                          size: 16,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ),
-          ],
-        )
+                ],
+              )
             : Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              CupertinoIcons.camera,
-              size: 48,
-              color: AppTheme.primaryGreen.withOpacity(0.5),
-            ),
-            const SizedBox(height: AppTheme.paddingSmall),
-            Text(
-              'Добавить фото',
-              style: AppTheme.bodyMedium.copyWith(
-                color: AppTheme.textMedium,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    CupertinoIcons.camera,
+                    size: 48,
+                    color: AppTheme.primaryGreen.withOpacity(0.5),
+                  ),
+                  const SizedBox(height: AppTheme.paddingSmall),
+                  Text(
+                    'Add Photo',
+                    style: AppTheme.bodyMedium.copyWith(
+                      color: AppTheme.textMedium,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
       ),
     );
   }

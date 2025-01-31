@@ -1,12 +1,13 @@
+import 'dart:io';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ai_20/core/bloc/plant_bloc.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:ai_20/core/constants/theme/app_theme.dart';
 import 'package:ai_20/core/models/plant_data_models.dart';
-import 'package:ai_20/features/main/pages/plant_details_screen.dart';
-import 'package:ai_20/features/main/widgets/add_plant_sheet.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
+import 'package:ai_20/features/main/widgets/add_plant_sheet.dart';
+import 'package:ai_20/features/main/pages/plant_details_screen.dart';
 
 class PlantCatalogScreen extends StatelessWidget {
   const PlantCatalogScreen({super.key});
@@ -18,7 +19,7 @@ class PlantCatalogScreen extends StatelessWidget {
         backgroundColor: AppTheme.backgroundLight,
         border: null,
         middle: Text(
-          'Мои растения',
+          'My plants',
           style: AppTheme.headlineMedium.copyWith(
             color: AppTheme.primaryGreen,
           ),
@@ -53,21 +54,21 @@ class PlantCatalogScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: AppTheme.paddingMedium),
                     Text(
-                      'Добавьте свое первое растение',
+                      'Add your first plant',
                       style: AppTheme.bodyLarge.copyWith(
                         color: AppTheme.textMedium,
                       ),
                     ),
                     const SizedBox(height: AppTheme.paddingSmall),
                     CupertinoButton(
-                      child: const Text('Добавить растение'),
+                      child: const Text('Add a plant'),
                       onPressed: () => _showAddPlantBottomSheet(context),
                     ),
                   ],
                 ),
               ).animate().fadeIn(
-                duration: AppTheme.animationNormal,
-              );
+                    duration: AppTheme.animationNormal,
+                  );
             }
 
             return CustomScrollView(
@@ -80,26 +81,27 @@ class PlantCatalogScreen extends StatelessWidget {
                 SliverPadding(
                   padding: const EdgeInsets.all(AppTheme.paddingMedium),
                   sliver: SliverGrid(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
                       mainAxisSpacing: AppTheme.paddingMedium,
                       crossAxisSpacing: AppTheme.paddingMedium,
                       childAspectRatio: 0.75,
                     ),
                     delegate: SliverChildBuilderDelegate(
-                          (context, index) {
+                      (context, index) {
                         final plant = state.plants[index];
                         return PlantCard(plant: plant)
                             .animate()
                             .fadeIn(
-                          duration: AppTheme.animationNormal,
-                          delay: (index * 100).milliseconds,
-                        )
+                              duration: AppTheme.animationNormal,
+                              delay: (index * 100).milliseconds,
+                            )
                             .slideY(
-                          begin: 0.2,
-                          duration: AppTheme.animationNormal,
-                          curve: Curves.easeOutQuad,
-                        );
+                              begin: 0.2,
+                              duration: AppTheme.animationNormal,
+                              curve: Curves.easeOutQuad,
+                            );
                       },
                       childCount: state.plants.length,
                     ),
@@ -110,7 +112,7 @@ class PlantCatalogScreen extends StatelessWidget {
           }
 
           return const Center(
-            child: Text('Что-то пошло не так'),
+            child: Text('Something went wrong.'),
           );
         },
       ),
@@ -151,18 +153,9 @@ class PlantCard extends StatelessWidget {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    Image.network(
-                      plant.imageUrl,
+                    Image.file(
+                      File(plant.imageUrl),
                       fit: BoxFit.cover,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Container(
-                          color: AppTheme.lightGreen.withOpacity(0.1),
-                          child: const Center(
-                            child: CupertinoActivityIndicator(),
-                          ),
-                        );
-                      },
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
                           color: AppTheme.lightGreen.withOpacity(0.1),
@@ -233,8 +226,8 @@ class PlantCard extends StatelessWidget {
     final color = daysUntilWatering <= 0
         ? CupertinoColors.destructiveRed
         : daysUntilWatering <= 1
-        ? CupertinoColors.activeOrange
-        : AppTheme.primaryGreen;
+            ? CupertinoColors.activeOrange
+            : AppTheme.primaryGreen;
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -276,28 +269,29 @@ class PlantCard extends StatelessWidget {
   String _getNextWateringText() {
     final days = _getDaysUntilWatering();
     if (days < 0) {
-      return 'Пропущен полив';
+      return 'Missed watering';
     } else if (days == 0) {
-      return 'Полить сегодня';
+      return 'Water it today';
     } else {
-      return 'Через $days ${_getDaysWord(days)}';
+      return 'In $days ${_getDaysWord(days)}';
     }
   }
 
   String _getShortWateringText() {
     final days = _getDaysUntilWatering();
-    if (days < 0) return 'Срочно!';
-    if (days == 0) return 'Сегодня';
-    return '$days д.';
+    if (days < 0) return 'Urgently!';
+    if (days == 0) return 'Today';
+    return '$days days.';
   }
 
   String _getDaysWord(int days) {
     if (days % 10 == 1 && days % 100 != 11) {
-      return 'день';
-    } else if ([2, 3, 4].contains(days % 10) && ![12, 13, 14].contains(days % 100)) {
-      return 'дня';
+      return 'day';
+    } else if ([2, 3, 4].contains(days % 10) &&
+        ![12, 13, 14].contains(days % 100)) {
+      return 'days';
     } else {
-      return 'дней';
+      return 'days';
     }
   }
 
