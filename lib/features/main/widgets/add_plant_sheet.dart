@@ -3,6 +3,7 @@
 import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:ai_20/core/bloc/plant_bloc.dart';
@@ -68,11 +69,15 @@ class _AddPlantSheetState extends State<AddPlantSheet> {
             if (state is PlantRecognized) {
               setState(() {
                 _isRecognizing = false;
+
                 _recognitionResult = state.recognitionResult;
+                final commonNames =
+                    _recognitionResult!['identification']['commonNames'] ?? [];
+                print('commonNames: $commonNames');
+
                 if (_nameController.text.isEmpty) {
-                  _nameController.text = _recognitionResult?['identification']
-                          ['common_name'] ??
-                      '';
+                  _nameController.text =
+                      commonNames.isNotEmpty ? commonNames[0] : 'Unknown';
                 }
               });
             }
@@ -127,6 +132,15 @@ class _AddPlantSheetState extends State<AddPlantSheet> {
                 child: Image.file(
                   File(_selectedImage!),
                   fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: AppTheme.lightGreen.withOpacity(0.1),
+                      child: const Icon(
+                        CupertinoIcons.leaf_arrow_circlepath,
+                        color: AppTheme.lightGreen,
+                      ),
+                    );
+                  },
                 ),
               )
             : Column(
@@ -152,7 +166,7 @@ class _AddPlantSheetState extends State<AddPlantSheet> {
 
   Widget _buildRecognitionResult() {
     final identification = _recognitionResult?['identification'] ?? {};
-    final careGuide = _recognitionResult?['care_guide'] ?? {};
+    final careGuide = _recognitionResult?['careGuide'] ?? {};
 
     return Container(
       padding: const EdgeInsets.all(AppTheme.paddingMedium),
@@ -168,7 +182,7 @@ class _AddPlantSheetState extends State<AddPlantSheet> {
           ),
           const SizedBox(height: AppTheme.paddingSmall),
           Text(
-            identification['species_name'] ?? 'Could not determine species',
+            identification['species'] ?? 'Could not determine species',
             style: AppTheme.bodyMedium,
           ),
           const SizedBox(height: AppTheme.paddingMedium),
@@ -182,7 +196,7 @@ class _AddPlantSheetState extends State<AddPlantSheet> {
           _buildCareGuideItem(
             icon: CupertinoIcons.drop,
             title: 'Watering:',
-            content: careGuide['watering'] ?? 'No data',
+            content: careGuide['water'] ?? 'No data',
           ),
           _buildCareGuideItem(
             icon: CupertinoIcons.sun_max,
@@ -190,9 +204,9 @@ class _AddPlantSheetState extends State<AddPlantSheet> {
             content: careGuide['light'] ?? 'No data',
           ),
           _buildCareGuideItem(
-            icon: CupertinoIcons.thermometer,
-            title: 'Temperature:',
-            content: careGuide['temperature'] ?? 'No data',
+            icon: CupertinoIcons.layers_alt,
+            title: 'Soil:',
+            content: careGuide['soil'] ?? 'No data',
           ),
         ],
       ),
@@ -257,7 +271,6 @@ class _AddPlantSheetState extends State<AddPlantSheet> {
           },
         ),
         const SizedBox(height: AppTheme.paddingMedium),
-        // Additional form fields can be added here
       ],
     );
   }
@@ -276,29 +289,74 @@ class _AddPlantSheetState extends State<AddPlantSheet> {
     );
   }
 
-  void _savePlant() {
+  void _savePlant() async {
     if (_selectedImage == null || _recognitionResult == null) return;
 
-    final newPlant = Plant(
-      name: _nameController.text,
-      species: _recognitionResult!['identification']['species_name'] ??
-          'Unknown species',
-      imageUrl: _selectedImage!,
-      lastWatered: DateTime.now(),
-      lastFertilized: DateTime.now(),
-      careGuide: _recognitionResult!['care_guide'] ?? {},
-      lightingGuide: {
-        'optimal_conditions':
-            _recognitionResult!['care_guide']['light'] ?? 'No data',
-      },
-      wateringSchedule: WateringSchedule(
-        frequencyDays: 7, // Default value, can be adjusted later
-        season: 'all',
-        adjustments: {},
-      ),
-    );
+    try {
+      final recognitionData = _recognitionResult!['identification'] ?? {};
+      final careGuideMap = _recognitionResult!['careGuide'] ?? {};
 
-    context.read<PlantBloc>().add(AddPlant(newPlant));
-    Navigator.of(context).pop();
+      final species = recognitionData['species'] ?? 'Unknown species';
+
+      if (_nameController.text.isEmpty) {
+        showCupertinoDialog(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: const Text('Name Required'),
+            content: const Text('Please enter a name for your plant.'),
+            actions: [
+              CupertinoDialogAction(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
+
+      final careGuide = PlantCareGuide.fromMap(careGuideMap);
+      final growthInfo =
+          PlantGrowthInfo.fromJson(_recognitionResult!['growthInfo']);
+      final identification = PlantIdentification.fromJson(recognitionData);
+      final lightingRecommendations = LightingRecommendations.fromJson(
+          _recognitionResult!['lightingRecommendations']);
+
+      final newPlant = Plant(
+        name: _nameController.text.isNotEmpty ? _nameController.text : species,
+        species: species,
+        imageUrl: _selectedImage!,
+        lastWatered: DateTime.now(),
+        lastFertilized: DateTime.now(),
+        careGuide: careGuide,
+        wateringSchedule: WateringSchedule(
+          frequencyDays: 7,
+          season: 'all',
+          adjustments: {},
+        ),
+        growthInfo: growthInfo,
+        identification: identification,
+        lightingRecommendations: lightingRecommendations,
+      );
+
+      context.read<PlantBloc>().add(AddPlant(newPlant));
+      Navigator.of(context).pop();
+    } catch (e) {
+      showCupertinoDialog(
+        context: context,
+        builder: (context) => CupertinoAlertDialog(
+          title: const Text('Error'),
+          content: Text(
+              "An error occurred while saving the plant:Pls check if it's a valid plant image you uploaded"),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      context.read<PlantBloc>().add(LoadPlants());
+    }
   }
 }

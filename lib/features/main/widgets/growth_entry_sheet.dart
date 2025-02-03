@@ -270,6 +270,15 @@ class _AddGrowthEntrySheetState extends State<AddGrowthEntrySheet> {
                     child: Image.file(
                       File(_selectedImage!),
                       fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: AppTheme.lightGreen.withOpacity(0.1),
+                          child: const Icon(
+                            CupertinoIcons.leaf_arrow_circlepath,
+                            color: AppTheme.lightGreen,
+                          ),
+                        );
+                      },
                     ),
                   ),
                   Positioned(

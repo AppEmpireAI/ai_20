@@ -2,7 +2,7 @@ import 'package:hive/hive.dart';
 
 part 'onboarding_state.g.dart';
 
-@HiveType(typeId: 3)
+@HiveType(typeId: 20)
 class OnboardingState {
   @HiveField(0)
   final bool hasCompletedOnboarding;

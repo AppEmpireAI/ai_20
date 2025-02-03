@@ -395,6 +395,15 @@ class _GrowthJournalScreenState extends State<GrowthJournalScreen> {
                 File(entry.imageUrl!),
                 height: 200,
                 fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: AppTheme.lightGreen.withOpacity(0.1),
+                    child: const Icon(
+                      CupertinoIcons.leaf_arrow_circlepath,
+                      color: AppTheme.lightGreen,
+                    ),
+                  );
+                },
               ),
             ),
           Padding(

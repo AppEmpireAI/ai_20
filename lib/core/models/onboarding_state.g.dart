@@ -8,7 +8,7 @@ part of 'onboarding_state.dart';
 
 class OnboardingStateAdapter extends TypeAdapter<OnboardingState> {
   @override
-  final int typeId = 3;
+  final int typeId = 20;
 
   @override
   OnboardingState read(BinaryReader reader) {

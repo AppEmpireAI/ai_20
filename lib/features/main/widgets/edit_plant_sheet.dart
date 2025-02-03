@@ -116,10 +116,28 @@ class _EditPlantSheetState extends State<EditPlantSheet> {
                   ? Image.file(
                       File(_newImagePath!),
                       fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: AppTheme.lightGreen.withOpacity(0.1),
+                          child: const Icon(
+                            CupertinoIcons.leaf_arrow_circlepath,
+                            color: AppTheme.lightGreen,
+                          ),
+                        );
+                      },
                     )
                   : Image.file(
                       File(widget.plant.imageUrl),
                       fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: AppTheme.lightGreen.withOpacity(0.1),
+                          child: const Icon(
+                            CupertinoIcons.leaf_arrow_circlepath,
+                            color: AppTheme.lightGreen,
+                          ),
+                        );
+                      },
                     ),
             ),
             Container(
@@ -214,9 +232,11 @@ class _EditPlantSheetState extends State<EditPlantSheet> {
       lastWatered: widget.plant.lastWatered,
       lastFertilized: widget.plant.lastFertilized,
       careGuide: widget.plant.careGuide,
-      lightingGuide: widget.plant.lightingGuide,
       wateringSchedule: widget.plant.wateringSchedule,
       growthJournal: widget.plant.growthJournal,
+      growthInfo: widget.plant.growthInfo,
+      identification: widget.plant.identification,
+      lightingRecommendations: widget.plant.lightingRecommendations,
     );
 
     context.read<PlantBloc>().add(UpdatePlant(updatedPlant));

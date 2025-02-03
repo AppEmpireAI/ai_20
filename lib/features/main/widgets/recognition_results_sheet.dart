@@ -28,13 +28,16 @@ class _RecognitionResultsSheetState extends State<RecognitionResultsSheet> {
   @override
   void initState() {
     super.initState();
-    _nameController.text =
-        widget.results['identification']?['common_name'] ?? '';
-    _confidence = widget.results['identification']?['confidence'] ?? 0.0;
+
+    final identification = widget.results['identification'] ?? {};
+    final commonNames = identification['commonNames'] ?? [];
+
+    _nameController.text = commonNames.isNotEmpty ? commonNames[0] : 'Unknown';
+    _confidence = identification['confidence'] ?? 0.0;
 
     Future.delayed(const Duration(milliseconds: 500), () {
       setState(() {
-        _confidence = widget.results['identification']?['confidence'] ?? 0.0;
+        _confidence = identification['confidence'] ?? 0.0;
       });
     });
   }
@@ -95,6 +98,15 @@ class _RecognitionResultsSheetState extends State<RecognitionResultsSheet> {
         child: Image.file(
           File(widget.imagePath),
           fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              color: AppTheme.lightGreen.withOpacity(0.1),
+              child: const Icon(
+                CupertinoIcons.leaf_arrow_circlepath,
+                color: AppTheme.lightGreen,
+              ),
+            );
+          },
         ),
       ),
     ).animate().fadeIn(duration: AppTheme.animationNormal).scale(
@@ -186,20 +198,20 @@ class _RecognitionResultsSheetState extends State<RecognitionResultsSheet> {
           _buildDetailItem(
             icon: CupertinoIcons.doc_text,
             title: 'Scientific Name',
-            content: identification['scientific_name'] ?? 'Unknown',
+            content: identification['species'] ?? 'Unknown',
           ),
-          const SizedBox(height: AppTheme.paddingSmall),
-          _buildDetailItem(
-            icon: CupertinoIcons.tree,
-            title: 'Family',
-            content: identification['family'] ?? 'Unknown',
-          ),
-          const SizedBox(height: AppTheme.paddingSmall),
-          _buildDetailItem(
-            icon: CupertinoIcons.globe,
-            title: 'Native Region',
-            content: identification['native_region'] ?? 'Unknown',
-          ),
+          // const SizedBox(height: AppTheme.paddingSmall),
+          // _buildDetailItem(
+          //   icon: CupertinoIcons.tree,
+          //   title: 'Family',
+          //   content: identification['family'] ?? 'Unknown',
+          // ),
+          // const SizedBox(height: AppTheme.paddingSmall),
+          // _buildDetailItem(
+          //   icon: CupertinoIcons.globe,
+          //   title: 'Native Region',
+          //   content: identification['native_region'] ?? 'Unknown',
+          // ),
         ],
       ),
     ).animate().fadeIn(
@@ -209,7 +221,7 @@ class _RecognitionResultsSheetState extends State<RecognitionResultsSheet> {
   }
 
   Widget _buildCareGuide() {
-    final careGuide = widget.results['care_guide'] ?? {};
+    final careGuide = widget.results['careGuide'] ?? {};
 
     return Container(
       padding: const EdgeInsets.all(AppTheme.paddingMedium),
@@ -227,8 +239,7 @@ class _RecognitionResultsSheetState extends State<RecognitionResultsSheet> {
           _buildCareItem(
             icon: CupertinoIcons.drop,
             title: 'Watering',
-            content:
-                careGuide['watering'] ?? 'No watering information available',
+            content: careGuide['water'] ?? 'No watering information available',
           ),
           const SizedBox(height: AppTheme.paddingSmall),
           _buildCareItem(
@@ -243,13 +254,13 @@ class _RecognitionResultsSheetState extends State<RecognitionResultsSheet> {
             content: careGuide['temperature'] ??
                 'No temperature information available',
           ),
-          const SizedBox(height: AppTheme.paddingSmall),
-          _buildCareItem(
-            icon: CupertinoIcons.arrow_up_arrow_down,
-            title: 'Humidity',
-            content:
-                careGuide['humidity'] ?? 'No humidity information available',
-          ),
+          // const SizedBox(height: AppTheme.paddingSmall),
+          // _buildCareItem(
+          //   icon: CupertinoIcons.arrow_up_arrow_down,
+          //   title: 'Humidity',
+          //   content:
+          //       careGuide['humidity'] ?? 'No humidity information available',
+          // ),
           const SizedBox(height: AppTheme.paddingSmall),
           _buildCareItem(
             icon: CupertinoIcons.layers_alt,
@@ -384,29 +395,38 @@ class _RecognitionResultsSheetState extends State<RecognitionResultsSheet> {
       return;
     }
 
-    final identification = widget.results['identification'] ?? {};
-    final careGuide = widget.results['care_guide'] ?? {};
+    final careGuideMap = widget.results['careGuide'] ?? {};
+    final growthInfoMap = widget.results['growthInfo'] ?? {};
+    final identificationMap = widget.results['identification'] ?? {};
+
+    final lightingRecommendationsMap =
+        widget.results['lightingRecommendations'] ?? {};
+
+    final careGuide = PlantCareGuide.fromMap(careGuideMap);
+    final growthInfo = PlantGrowthInfo.fromJson(growthInfoMap);
+    final identification = PlantIdentification.fromJson(identificationMap);
+    final lightingRecommendations =
+        LightingRecommendations.fromJson(lightingRecommendationsMap);
 
     final newPlant = Plant(
       name: _nameController.text,
-      species: identification['scientific_name'] ?? 'Unknown Species',
+      species: identification.species,
       imageUrl: widget.imagePath,
       lastWatered: DateTime.now(),
       lastFertilized: DateTime.now(),
       careGuide: careGuide,
-      lightingGuide: {
-        'optimal_conditions': careGuide['light'] ?? 'No data available',
-      },
       wateringSchedule: WateringSchedule(
-        frequencyDays: 7, // Default value
+        frequencyDays: 7,
         season: 'all',
         adjustments: {},
       ),
+      growthInfo: growthInfo,
+      identification: identification,
+      lightingRecommendations: lightingRecommendations,
     );
 
     context.read<PlantBloc>().add(AddPlant(newPlant));
 
-    // Show success message and handle navigation
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
@@ -415,11 +435,7 @@ class _RecognitionResultsSheetState extends State<RecognitionResultsSheet> {
         actions: [
           CupertinoDialogAction(
             onPressed: () {
-              // First close the dialog
               Navigator.pop(context);
-              // Then close the results sheet
-              // Navigator.pop(context);
-              // Finally, reset the recognition screen state
               if (mounted) {
                 setState(() {
                   _nameController.clear();

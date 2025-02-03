@@ -1,240 +1,524 @@
 import 'dart:convert';
-import 'dart:developer';
-import 'package:dart_openai/dart_openai.dart';
-// ignore: depend_on_referenced_packages
-import 'package:collection/collection.dart';
+import 'package:logger/logger.dart';
+import 'package:http/http.dart' as http;
+import 'package:ai_20/core/models/plant_data_models.dart';
+
+var logger = Logger();
+
+const String model = "gpt-4o";
+const String apiUrl = 'https://api.openai.com/v1/chat/completions';
+String openAI = "";
 
 class PlantAIService {
   PlantAIService init() {
-    try {
-      OpenAI.apiKey = const String.fromEnvironment('OPENAI_API_KEY');
-      OpenAI.showLogs = true;
-      OpenAI.showResponsesLogs = true;
-      return this;
-    } catch (e) {
-      log('Error initializing Plant AI service: ${e.toString()}');
-      rethrow;
-    }
+    return this;
   }
 
   Future<Map<String, dynamic>> identifyPlant(String base64Image) async {
-    final systemMessage = '''
-Analyze this plant image and provide detailed information:
-
-Please provide:
-1. Plant identification (species and common names)
-2. Care requirements (water, light, soil, temperature)
-3. Growth characteristics
-4. Common issues and solutions
-5. Special care instructions
-
-Response must be a JSON object with:
-- identification (object): Plant species and variety details
-- care_guide (object): Detailed care instructions
-- growth_info (object): Growth patterns and expectations
-- common_issues (array): Potential problems and solutions
-- special_notes (array): Additional important information
-''';
-
-    final messages = [
-      OpenAIChatCompletionChoiceMessageModel(
-        content: [
-          OpenAIChatCompletionChoiceMessageContentItemModel.text(systemMessage),
-          OpenAIChatCompletionChoiceMessageContentItemModel.imageUrl(
-            base64Image,
-          ),
-        ],
-        role: OpenAIChatMessageRole.user,
-      ),
-    ];
+    final formattedBase64 = 'data:image/jpeg;base64,$base64Image';
 
     try {
-      final chat = await OpenAI.instance.chat.create(
-        model: "gpt-4-vision-preview",
-        messages: messages,
-        responseFormat: {"type": "json_object"},
-        seed: 42,
-        temperature: 0.7,
-        maxTokens: 1000,
+      final requestBody = json.encode({
+        "model": model,
+        "messages": [
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text":
+                    """Analyze this plant image and provide details in the following exact JSON format:
+                  {
+                    "identification": {
+                      "species": "Scientific name",
+                      "commonNames": ["Common name 1", "Common name 2"],
+                      "confidence": 0.95
+                    },
+                    "careGuide": {
+                      "water": "Detailed watering instructions",
+                      "light": "Light requirements",
+                      "soil": "Soil requirements",
+                      "temperature": "Temperature range and requirements"
+                    },
+                    "growthInfo": {
+                      "growthRate": "Description of growth speed",
+                      "height": "Expected height range",
+                      "spread": "Expected spread range"
+                    },
+                    "commonIssues": [
+                      {
+                        "issue": "Problem name",
+                        "solution": "How to solve it"
+                      }
+                    ],
+                    "specialNotes": [
+                      "Important care note 1",
+                      "Important care note 2"
+                    ]
+                      "lightingRecommendations": {
+                        "optimal_conditions": {
+                          "light_type": "What type of light is best (e.g., direct, indirect)",
+                          "light_intensity": "What level of light intensity is recommended (e.g., low, medium, high)",
+                          "duration": "How many hours of light per day"
+                        },
+                        "placement": [
+                          "What placement/positioning of the plant is ideal (e.g., near a south-facing window)"
+                        ],
+                        "distance_guide": {
+                          "minimum_distance": "Minimum distance from light source",
+                          "maximum_distance": "Maximum distance from light source"
+                        },
+                        "seasonal_adjustments": {
+                          "spring": "Spring adjustments",
+                          "summer": "Summer adjustments",
+                          "fall": "Fall adjustments",
+                          "winter": "Winter adjustments"
+                        },
+                        "warning_signs": [
+                          "Signs the plant is not receiving enough light or receiving too much"
+                        ]
+                      }
+                  }"""
+              },
+              {
+                "type": "image_url",
+                "image_url": {
+                  "url": formattedBase64,
+                  "detail": "high",
+                },
+              },
+            ]
+          }
+        ],
+        "max_tokens": 1000,
+        "temperature": 0.7,
+        "response_format": {"type": "json_object"},
+      });
+
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $openAI',
+        },
+        body: requestBody,
       );
 
-      if (chat.choices.isEmpty) {
-        throw Exception('No response received from AI');
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        logger.d('Full response: $responseData');
+
+        final contentString = responseData['choices'][0]['message']['content'];
+        logger.d('Content string: $contentString');
+
+        try {
+          final Map<String, dynamic> parsedContent = json.decode(contentString);
+          logger.d('Parsed content: $parsedContent');
+
+          _validateIdentificationResponse(parsedContent);
+
+          return parsedContent;
+        } catch (e) {
+          logger.e('Error parsing content: $e');
+          throw FormatException('Invalid JSON format in response content');
+        }
+      } else {
+        logger.e('API Error: ${response.statusCode} - ${response.body}');
+        throw Exception(
+            'Failed to communicate with OpenAI: ${response.statusCode}');
       }
-
-      final content = chat.choices.first.message.content;
-      if (content == null || content.isEmpty) {
-        throw Exception('Empty response from AI');
-      }
-
-      final textItem = content.firstWhereOrNull(
-        (item) => item.type == 'text' && item.text != null,
-      );
-
-      if (textItem?.text == null) {
-        throw Exception('No valid text content in AI response');
-      }
-
-      return json.decode(textItem!.text!) as Map<String, dynamic>;
     } catch (e) {
-      log('Error identifying plant: ${e.toString()}');
-      return {
-        'identification': {'error': 'Unable to identify plant'},
-        'care_guide': {'error': 'Care guide unavailable'},
-        'growth_info': {'error': 'Growth information unavailable'},
-        'common_issues': ['Service temporarily unavailable'],
-        'special_notes': ['Please try again later'],
-      };
+      logger.e('Error communicating with OpenAI: $e');
+      return _getDefaultResponse();
     }
   }
 
   Future<Map<String, dynamic>> getPlantCareSchedule(
-    String plantName,
-    Map<String, dynamic> careRequirements,
-  ) async {
-    final systemMessage = '''
-Create a detailed care schedule for: $plantName
-
-Care Requirements:
-${jsonEncode(careRequirements)}
-
-Please provide:
-1. Watering schedule
-2. Fertilizing timeline
-3. Pruning and maintenance tasks
-4. Seasonal care adjustments
-5. Growth monitoring guidelines
-
-Response must be a JSON object with:
-- watering (object): Detailed watering schedule
-- fertilizing (object): Fertilization timeline
-- maintenance (array): Regular care tasks
-- seasonal_care (object): Season-specific adjustments
-- monitoring (object): Growth tracking guidelines
-''';
-
-    final messages = [
-      OpenAIChatCompletionChoiceMessageModel(
-        content: [
-          OpenAIChatCompletionChoiceMessageContentItemModel.text(systemMessage),
-        ],
-        role: OpenAIChatMessageRole.user,
-      ),
-    ];
-
+      String plantName, PlantCareGuide careGuide) async {
     try {
-      final chat = await OpenAI.instance.chat.create(
-        model: "gpt-4",
-        messages: messages,
-        responseFormat: {"type": "json_object"},
-        seed: 42,
-        temperature: 0.7,
-        maxTokens: 1000,
+      final requestBody = json.encode({
+        "model": model,
+        "messages": [
+          {
+            "role": "user",
+            "content": """Create a detailed care schedule for: $plantName
+
+        Current Care Guide:
+        ${jsonEncode(careGuide)}
+
+        Provide a detailed schedule in the following exact JSON format:
+        {
+          "wateringSchedule": {
+            "frequencyDays": 7,
+            "season": "all",
+            "adjustments": {
+              "summer": { "frequencyDays": 5, "notes": "Increase watering in hot weather" },
+              "winter": { "frequencyDays": 10, "notes": "Reduce watering in dormancy" }
+            }
+          },
+          "fertilizingSchedule": {
+            "frequency": "How often to fertilize",
+            "fertilizer": {
+              "type": "Recommended fertilizer type",
+              "npkRatio": "Recommended NPK ratio",
+              "application": "How to apply"
+            },
+            "seasonalAdjustments": {
+              "spring": "Spring fertilizing instructions",
+              "summer": "Summer fertilizing instructions",
+              "fall": "Fall fertilizing instructions",
+              "winter": "Winter fertilizing instructions"
+            }
+          },
+          "maintenanceTasks": [
+            {
+              "task": "Task name",
+              "frequency": "How often",
+              "instructions": "Detailed instructions",
+              "season": "When to perform this task",
+              "importance": "high/medium/low"
+            }
+          ],
+          "growthMonitoring": {
+            "checkFrequency": "How often to check growth",
+            "measurementPoints": [
+              "What to measure/check"
+            ],
+            "expectedGrowth": {
+              "spring": "Expected spring growth rate",
+              "summer": "Expected summer growth rate",
+              "fall": "Expected fall growth rate",
+              "winter": "Expected winter growth rate"
+            }
+          }
+
+        }"""
+          }
+        ],
+        "max_tokens": 1000,
+        "temperature": 0.7,
+        "response_format": {"type": "json_object"},
+      });
+
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $openAI',
+        },
+        body: requestBody,
       );
 
-      if (chat.choices.isEmpty) {
-        throw Exception('No response received from AI');
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        logger.d('Full response: $responseData');
+
+        final contentString = responseData['choices'][0]['message']['content'];
+        logger.d('Content string: $contentString');
+
+        try {
+          final Map<String, dynamic> parsedContent = json.decode(contentString);
+          logger.d('Parsed content: $parsedContent');
+
+          _validateCareScheduleResponse(parsedContent);
+
+          return parsedContent;
+        } catch (e) {
+          logger.e('Error parsing care schedule content: $e');
+          throw FormatException(
+              'Invalid JSON format in care schedule response');
+        }
+      } else {
+        logger.e('API Error: ${response.statusCode} - ${response.body}');
+        throw Exception(
+            'Failed to communicate with OpenAI: ${response.statusCode}');
       }
-
-      final content = chat.choices.first.message.content;
-      if (content == null || content.isEmpty) {
-        throw Exception('Empty response from AI');
-      }
-
-      final textItem = content.firstWhereOrNull(
-        (item) => item.type == 'text' && item.text != null,
-      );
-
-      if (textItem?.text == null) {
-        throw Exception('No valid text content in AI response');
-      }
-
-      return json.decode(textItem!.text!) as Map<String, dynamic>;
     } catch (e) {
-      log('Error generating care schedule: ${e.toString()}');
-      return {
-        'watering': {'error': 'Unable to generate watering schedule'},
-        'fertilizing': {'error': 'Fertilizing schedule unavailable'},
-        'maintenance': ['Service temporarily unavailable'],
-        'seasonal_care': {'error': 'Seasonal care guide unavailable'},
-        'monitoring': {'error': 'Monitoring guidelines unavailable'},
-      };
+      logger.e('Error generating care schedule: $e');
+      return _getDefaultCareSchedule();
     }
+  }
+
+  void _validateCareScheduleResponse(Map<String, dynamic> response) {
+    if (!response.containsKey('wateringSchedule') ||
+        !response.containsKey('fertilizingSchedule') ||
+        !response.containsKey('maintenanceTasks') ||
+        !response.containsKey('growthMonitoring')) {
+      throw FormatException(
+          'Missing required top-level keys in care schedule response');
+    }
+
+    final wateringSchedule = response['wateringSchedule'];
+    if (!wateringSchedule.containsKey('frequencyDays') ||
+        !wateringSchedule.containsKey('season') ||
+        !wateringSchedule.containsKey('adjustments')) {
+      throw FormatException('Invalid wateringSchedule object structure');
+    }
+
+    final fertilizingSchedule = response['fertilizingSchedule'];
+    if (!fertilizingSchedule.containsKey('frequency') ||
+        !fertilizingSchedule.containsKey('fertilizer') ||
+        !fertilizingSchedule.containsKey('seasonalAdjustments')) {
+      throw FormatException('Invalid fertilizingSchedule object structure');
+    }
+
+    if (!(response['maintenanceTasks'] is List)) {
+      throw FormatException('maintenanceTasks must be an array');
+    }
+
+    final growthMonitoring = response['growthMonitoring'];
+    if (!growthMonitoring.containsKey('checkFrequency') ||
+        !growthMonitoring.containsKey('measurementPoints') ||
+        !growthMonitoring.containsKey('expectedGrowth')) {
+      throw FormatException('Invalid growthMonitoring object structure');
+    }
+  }
+
+  Map<String, dynamic> _getDefaultCareSchedule() {
+    return {
+      "wateringSchedule": {
+        "frequencyDays": 7,
+        "season": "all",
+        "adjustments": {
+          "summer": {"frequencyDays": 7, "notes": "Information unavailable"},
+          "winter": {"frequencyDays": 7, "notes": "Information unavailable"}
+        }
+      },
+      "fertilizingSchedule": {
+        "frequency": "Information unavailable",
+        "fertilizer": {
+          "type": "Information unavailable",
+          "npkRatio": "Information unavailable",
+          "application": "Information unavailable"
+        },
+        "seasonalAdjustments": {
+          "spring": "Information unavailable",
+          "summer": "Information unavailable",
+          "fall": "Information unavailable",
+          "winter": "Information unavailable"
+        }
+      },
+      "maintenanceTasks": [
+        {
+          "task": "Service Unavailable",
+          "frequency": "Information unavailable",
+          "instructions": "Please try again later",
+          "season": "all",
+          "importance": "medium"
+        }
+      ],
+      "growthMonitoring": {
+        "checkFrequency": "Information unavailable",
+        "measurementPoints": ["Information unavailable"],
+        "expectedGrowth": {
+          "spring": "Information unavailable",
+          "summer": "Information unavailable",
+          "fall": "Information unavailable",
+          "winter": "Information unavailable"
+        }
+      }
+    };
+  }
+
+  void _validateIdentificationResponse(Map<String, dynamic> response) {
+    if (!response.containsKey('identification') ||
+        !response.containsKey('careGuide') ||
+        !response.containsKey('growthInfo') ||
+        !response.containsKey('commonIssues') ||
+        !response.containsKey('specialNotes')) {
+      throw FormatException('Missing required top-level keys in response');
+    }
+
+    final identification = response['identification'];
+    if (!identification.containsKey('species') ||
+        !identification.containsKey('commonNames') ||
+        !identification.containsKey('confidence')) {
+      throw FormatException('Invalid identification object structure');
+    }
+
+    final careGuide = response['careGuide'];
+    if (!careGuide.containsKey('water') ||
+        !careGuide.containsKey('light') ||
+        !careGuide.containsKey('soil') ||
+        !careGuide.containsKey('temperature')) {
+      throw FormatException('Invalid careGuide object structure');
+    }
+
+    final growthInfo = response['growthInfo'];
+    if (!growthInfo.containsKey('growthRate') ||
+        !growthInfo.containsKey('height') ||
+        !growthInfo.containsKey('spread')) {
+      throw FormatException('Invalid growthInfo object structure');
+    }
+  }
+
+  Map<String, dynamic> _getDefaultResponse() {
+    return {
+      "identification": {
+        "species": "Unknown Species",
+        "commonNames": ["Unknown Plant"],
+        "confidence": 0.0
+      },
+      "careGuide": {
+        "water": "Information unavailable",
+        "light": "Information unavailable",
+        "soil": "Information unavailable",
+        "temperature": "Information unavailable"
+      },
+      "growthInfo": {
+        "growthRate": "Information unavailable",
+        "height": "Information unavailable",
+        "spread": "Information unavailable"
+      },
+      "commonIssues": [
+        {"issue": "Service Unavailable", "solution": "Please try again later"}
+      ],
+      "specialNotes": [
+        "Plant identification service is temporarily unavailable"
+      ]
+    };
   }
 
   Future<Map<String, dynamic>> getLightingRecommendations(
     String plantName,
-    Map<String, dynamic> lightRequirements,
+    LightingRecommendations lightRequirements,
   ) async {
-    final systemMessage = '''
-Provide lighting recommendations for: $plantName
+    try {
+      final requestBody = json.encode({
+        "model": model,
+        "messages": [
+          {
+            "role": "user",
+            "content": """Provide lighting recommendations for: $plantName
 
 Light Requirements:
 ${jsonEncode(lightRequirements)}
 
-Please provide:
-1. Optimal light conditions
-2. Best window orientations
-3. Distance from light sources
-4. Seasonal light adjustments
-5. Signs of improper lighting
-
-Response must be a JSON object with:
-- optimal_conditions (object): Ideal lighting details
-- placement (array): Specific placement recommendations
-- distance_guide (object): Distance recommendations
-- seasonal_adjustments (object): Seasonal changes
-- warning_signs (array): Signs of lighting issues
-''';
-
-    final messages = [
-      OpenAIChatCompletionChoiceMessageModel(
-        content: [
-          OpenAIChatCompletionChoiceMessageContentItemModel.text(systemMessage),
+Please provide the following in the exact JSON format:
+{
+  "optimal_conditions": {
+    "light_type": "What type of light is best (e.g., direct, indirect)",
+    "light_intensity": "What level of light intensity is recommended (e.g., low, medium, high)",
+    "duration": "How many hours of light per day"
+  },
+  "placement": [
+    "What placement/positioning of the plant is ideal (e.g., near a south-facing window)"
+  ],
+  "distance_guide": {
+    "minimum_distance": "Minimum distance from light source",
+    "maximum_distance": "Maximum distance from light source"
+  },
+  "seasonal_adjustments": {
+    "spring": "Spring adjustments",
+    "summer": "Summer adjustments",
+    "fall": "Fall adjustments",
+    "winter": "Winter adjustments"
+  },
+  "warning_signs": [
+    "Signs the plant is not receiving enough light or receiving too much"
+  ]
+}"""
+          }
         ],
-        role: OpenAIChatMessageRole.user,
-      ),
-    ];
+        "max_tokens": 1000,
+        "temperature": 0.7,
+        "response_format": {"type": "json_object"},
+      });
 
-    try {
-      final chat = await OpenAI.instance.chat.create(
-        model: "gpt-4",
-        messages: messages,
-        responseFormat: {"type": "json_object"},
-        seed: 42,
-        temperature: 0.7,
-        maxTokens: 1000,
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $openAI',
+        },
+        body: requestBody,
       );
 
-      if (chat.choices.isEmpty) {
-        throw Exception('No response received from AI');
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        logger.d('Full response: $responseData');
+
+        final contentString = responseData['choices'][0]['message']['content'];
+        logger.d('Content string: $contentString');
+
+        try {
+          final Map<String, dynamic> parsedContent = json.decode(contentString);
+          logger.d('Parsed content: $parsedContent');
+
+          _validateLightingRecommendationsResponse(parsedContent);
+
+          return parsedContent;
+        } catch (e) {
+          logger.e('Error parsing lighting recommendations content: $e');
+          throw FormatException(
+              'Invalid JSON format in lighting recommendations response');
+        }
+      } else {
+        logger.e('API Error: ${response.statusCode} - ${response.body}');
+        throw Exception(
+            'Failed to communicate with OpenAI: ${response.statusCode}');
       }
-
-      final content = chat.choices.first.message.content;
-      if (content == null || content.isEmpty) {
-        throw Exception('Empty response from AI');
-      }
-
-      final textItem = content.firstWhereOrNull(
-        (item) => item.type == 'text' && item.text != null,
-      );
-
-      if (textItem?.text == null) {
-        throw Exception('No valid text content in AI response');
-      }
-
-      return json.decode(textItem!.text!) as Map<String, dynamic>;
     } catch (e) {
-      log('Error generating lighting recommendations: ${e.toString()}');
+      logger.e('Error generating lighting recommendations: $e');
       return {
         'optimal_conditions': {
-          'error': 'Unable to determine optimal conditions'
+          'light_type': 'Information unavailable',
+          'light_intensity': 'Information unavailable',
+          'duration': 'Information unavailable',
         },
         'placement': ['Service temporarily unavailable'],
-        'distance_guide': {'error': 'Distance guide unavailable'},
-        'seasonal_adjustments': {'error': 'Seasonal adjustments unavailable'},
+        'distance_guide': {
+          'minimum_distance': 'Information unavailable',
+          'maximum_distance': 'Information unavailable',
+        },
+        'seasonal_adjustments': {
+          'spring': 'Information unavailable',
+          'summer': 'Information unavailable',
+          'fall': 'Information unavailable',
+          'winter': 'Information unavailable',
+        },
         'warning_signs': ['Please try again later'],
       };
+    }
+  }
+
+  void _validateLightingRecommendationsResponse(Map<String, dynamic> response) {
+    if (!response.containsKey('optimal_conditions') ||
+        !response.containsKey('placement') ||
+        !response.containsKey('distance_guide') ||
+        !response.containsKey('seasonal_adjustments') ||
+        !response.containsKey('warning_signs')) {
+      throw FormatException(
+          'Missing required top-level keys in lighting recommendations response');
+    }
+
+    final optimalConditions = response['optimal_conditions'];
+    if (!optimalConditions.containsKey('light_type') ||
+        !optimalConditions.containsKey('light_intensity') ||
+        !optimalConditions.containsKey('duration')) {
+      throw FormatException('Invalid optimal_conditions object structure');
+    }
+
+    if (!(response['placement'] is List)) {
+      throw FormatException('placement must be an array');
+    }
+
+    final distanceGuide = response['distance_guide'];
+    if (!distanceGuide.containsKey('minimum_distance') ||
+        !distanceGuide.containsKey('maximum_distance')) {
+      throw FormatException('Invalid distance_guide object structure');
+    }
+
+    final seasonalAdjustments = response['seasonal_adjustments'];
+    if (!seasonalAdjustments.containsKey('spring') ||
+        !seasonalAdjustments.containsKey('summer') ||
+        !seasonalAdjustments.containsKey('fall') ||
+        !seasonalAdjustments.containsKey('winter')) {
+      throw FormatException('Invalid seasonal_adjustments object structure');
+    }
+
+    if (!(response['warning_signs'] is List)) {
+      throw FormatException('warning_signs must be an array');
     }
   }
 }

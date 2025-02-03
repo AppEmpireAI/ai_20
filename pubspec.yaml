@@ -39,6 +39,7 @@ dependencies:
   package_info_plus: ^8.1.4
   share_plus:
   flutter_svg: ^2.0.17
+  logger: ^2.5.0
 
 dev_dependencies:
   flutter_test:

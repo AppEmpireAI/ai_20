@@ -192,24 +192,22 @@ class _PlantDetailsScreenState extends State<PlantDetailsScreen> {
               _buildCareItem(
                 icon: CupertinoIcons.sun_max,
                 title: 'Lighting',
-                content: widget.plant.lightingGuide['optimal_conditions'] ??
-                    'No data available',
+                content: widget
+                    .plant.lightingRecommendations.optimalConditions.lightType,
                 onTap: () => _showLightingDetails(context),
               ),
               const Divider(height: AppTheme.paddingLarge),
               _buildCareItem(
                 icon: CupertinoIcons.drop,
                 title: 'Watering',
-                content:
-                    widget.plant.careGuide['watering'] ?? 'No data available',
+                content: widget.plant.careGuide.water,
                 onTap: () => _showWateringDetails(context),
               ),
               const Divider(height: AppTheme.paddingLarge),
               _buildCareItem(
                 icon: CupertinoIcons.thermometer,
                 title: 'Temperature',
-                content: widget.plant.careGuide['temperature'] ??
-                    'No data available',
+                content: widget.plant.careGuide.temperature,
               ),
             ],
           ),

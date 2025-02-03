@@ -10,7 +10,7 @@ import 'package:ai_20/core/constants/theme/app_theme.dart';
 import 'package:ai_20/features/main/pages/settings_screen.dart';
 import 'package:ai_20/features/main/pages/onboarding_screen.dart';
 import 'package:ai_20/features/main/pages/plant_catalog_screen.dart';
-import 'package:ai_20/features/main/pages/growth_journal_screen.dart';
+// import 'package:ai_20/features/main/pages/growth_journal_screen.dart';
 import 'package:ai_20/features/main/pages/plant_recognition_screen.dart';
 
 void main() async {
@@ -21,6 +21,14 @@ void main() async {
   Hive.registerAdapter(PlantAdapter());
   Hive.registerAdapter(GrowthEntryAdapter());
   Hive.registerAdapter(WateringScheduleAdapter());
+  Hive.registerAdapter(PlantIdentificationAdapter());
+  Hive.registerAdapter(PlantCareGuideAdapter());
+  Hive.registerAdapter(PlantGrowthInfoAdapter());
+  Hive.registerAdapter(PlantIssueAdapter());
+  Hive.registerAdapter(LightingRecommendationsAdapter());
+  Hive.registerAdapter(OptimalConditionsAdapter());
+  Hive.registerAdapter(DistanceGuideAdapter());
+  Hive.registerAdapter(SeasonalAdjustmentsAdapter());
   Hive.registerAdapter(OnboardingStateAdapter());
 
   final plantBox = await Hive.openBox<Plant>('plants');
@@ -75,18 +83,14 @@ class MyApp extends StatelessWidget {
         ),
         home: BlocBuilder<OnboardingBloc, OnboardingStatus>(
           builder: (context, state) {
-            // Initial state - check onboarding status
             if (state is OnboardingInitial) {
               context.read<OnboardingBloc>().add(CheckOnboardingStatus());
               return const CupertinoActivityIndicator();
             }
 
-            // Show onboarding for first-time users
             if (state is OnboardingRequired) {
               return const OnboardingScreen();
             }
-
-            // Show main app for returning users
             return const MainScreen();
           },
         ),
@@ -120,13 +124,13 @@ class MainScreen extends StatelessWidget {
             ),
             label: 'Recognize',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(
-              CupertinoIcons.chart_bar_fill,
-              size: 20,
-            ),
-            label: 'Journal',
-          ),
+          // BottomNavigationBarItem(
+          //   icon: Icon(
+          //     CupertinoIcons.chart_bar_fill,
+          //     size: 20,
+          //   ),
+          //   label: 'Journal',
+          // ),
           BottomNavigationBarItem(
             icon: Icon(
               CupertinoIcons.settings,
@@ -145,9 +149,10 @@ class MainScreen extends StatelessWidget {
               case 1:
                 return const PlantRecognitionScreen();
               case 2:
-                return const GrowthJournalScreen();
-              case 3:
                 return const SettingsScreen();
+              // return const GrowthJournalScreen();
+              // case 3:
+              //   return const SettingsScreen();
               default:
                 return const SizedBox.shrink();
             }
@@ -157,3 +162,7 @@ class MainScreen extends StatelessWidget {
     );
   }
 }
+
+
+// dart run build_runner watch     
+// flutter build apk --split-per-abi

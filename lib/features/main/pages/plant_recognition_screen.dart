@@ -135,6 +135,15 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
                     Image.file(
                       File(_imagePath!),
                       fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: AppTheme.lightGreen.withOpacity(0.1),
+                          child: const Icon(
+                            CupertinoIcons.leaf_arrow_circlepath,
+                            color: AppTheme.lightGreen,
+                          ),
+                        );
+                      },
                     ),
                     if (_isRecognizing)
                       Container(

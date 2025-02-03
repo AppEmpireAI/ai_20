@@ -200,8 +200,7 @@ class _WateringDetailsSheetState extends State<WateringDetailsSheet> {
           ),
           const SizedBox(height: AppTheme.paddingSmall),
           Text(
-            widget.plant.careGuide['watering'] ??
-                'No recommendations available',
+            widget.plant.careGuide.water,
             style: AppTheme.bodyMedium,
           ),
           const SizedBox(height: AppTheme.paddingMedium),
