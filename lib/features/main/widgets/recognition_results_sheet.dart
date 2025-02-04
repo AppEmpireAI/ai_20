@@ -378,12 +378,82 @@ class _RecognitionResultsSheetState extends State<RecognitionResultsSheet> {
   }
 
   void _addToCollection() {
-    if (_nameController.text.isEmpty) {
+    try {
+      if (_nameController.text.isEmpty) {
+        showCupertinoDialog(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: const Text('Name Required'),
+            content: const Text('Please enter a name for your plant.'),
+            actions: [
+              CupertinoDialogAction(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
+
+      final careGuideMap = widget.results['careGuide'] ?? {};
+      final growthInfoMap = widget.results['growthInfo'] ?? {};
+      final identificationMap = widget.results['identification'] ?? {};
+      final lightingRecommendationsMap =
+          widget.results['lightingRecommendations'] ?? {};
+
+      final careGuide = PlantCareGuide.fromMap(careGuideMap);
+      final growthInfo = PlantGrowthInfo.fromJson(growthInfoMap);
+      final identification = PlantIdentification.fromJson(identificationMap);
+      final lightingRecommendations =
+          LightingRecommendations.fromJson(lightingRecommendationsMap);
+
+      final newPlant = Plant(
+        name: _nameController.text,
+        species: identification.species,
+        imageUrl: widget.imagePath,
+        lastWatered: DateTime.now(),
+        lastFertilized: DateTime.now(),
+        careGuide: careGuide,
+        wateringSchedule: WateringSchedule(
+          frequencyDays: 7,
+          season: 'all',
+          adjustments: {},
+        ),
+        growthInfo: growthInfo,
+        identification: identification,
+        lightingRecommendations: lightingRecommendations,
+      );
+
+      context.read<PlantBloc>().add(AddPlant(newPlant));
+
       showCupertinoDialog(
         context: context,
         builder: (context) => CupertinoAlertDialog(
-          title: const Text('Name Required'),
-          content: const Text('Please enter a name for your plant.'),
+          title: const Text('Plant Added'),
+          content: const Text('The plant has been added to your collection.'),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () {
+                Navigator.pop(context);
+                if (mounted) {
+                  setState(() {
+                    _nameController.clear();
+                  });
+                }
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      showCupertinoDialog(
+        context: context,
+        builder: (context) => CupertinoAlertDialog(
+          title: const Text('Error'),
+          content: Text(
+              "An error occurred while saving the plant:Pls check if it's a valid plant image you uploaded"),
           actions: [
             CupertinoDialogAction(
               onPressed: () => Navigator.pop(context),
@@ -392,60 +462,7 @@ class _RecognitionResultsSheetState extends State<RecognitionResultsSheet> {
           ],
         ),
       );
-      return;
+      context.read<PlantBloc>().add(LoadPlants());
     }
-
-    final careGuideMap = widget.results['careGuide'] ?? {};
-    final growthInfoMap = widget.results['growthInfo'] ?? {};
-    final identificationMap = widget.results['identification'] ?? {};
-
-    final lightingRecommendationsMap =
-        widget.results['lightingRecommendations'] ?? {};
-
-    final careGuide = PlantCareGuide.fromMap(careGuideMap);
-    final growthInfo = PlantGrowthInfo.fromJson(growthInfoMap);
-    final identification = PlantIdentification.fromJson(identificationMap);
-    final lightingRecommendations =
-        LightingRecommendations.fromJson(lightingRecommendationsMap);
-
-    final newPlant = Plant(
-      name: _nameController.text,
-      species: identification.species,
-      imageUrl: widget.imagePath,
-      lastWatered: DateTime.now(),
-      lastFertilized: DateTime.now(),
-      careGuide: careGuide,
-      wateringSchedule: WateringSchedule(
-        frequencyDays: 7,
-        season: 'all',
-        adjustments: {},
-      ),
-      growthInfo: growthInfo,
-      identification: identification,
-      lightingRecommendations: lightingRecommendations,
-    );
-
-    context.read<PlantBloc>().add(AddPlant(newPlant));
-
-    showCupertinoDialog(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text('Plant Added'),
-        content: const Text('The plant has been added to your collection.'),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () {
-              Navigator.pop(context);
-              if (mounted) {
-                setState(() {
-                  _nameController.clear();
-                });
-              }
-            },
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
   }
 }

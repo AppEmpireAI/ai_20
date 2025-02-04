@@ -46,6 +46,7 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
               onTap: _takePicture,
               child: Container(
                 margin: const EdgeInsets.all(AppTheme.paddingMedium),
+                padding: const EdgeInsets.all(AppTheme.paddingSmall),
                 decoration: BoxDecoration(
                   color: AppTheme.lightGreen.withOpacity(0.1),
                   borderRadius:
@@ -170,21 +171,17 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
               ),
               Padding(
                 padding: const EdgeInsets.all(AppTheme.paddingMedium),
-                child: Row(
+                child: Column(
                   children: [
-                    Expanded(
-                      child: CupertinoButton(
-                        color: CupertinoColors.destructiveRed,
-                        onPressed: _resetImage,
-                        child: const Text('Try Again'),
-                      ),
+                    CupertinoButton.filled(
+                      onPressed: _isRecognizing ? null : _recognizePlant,
+                      child: const Text('Identify'),
                     ),
-                    const SizedBox(width: AppTheme.paddingMedium),
-                    Expanded(
-                      child: CupertinoButton.filled(
-                        onPressed: _isRecognizing ? null : _recognizePlant,
-                        child: const Text('Identify'),
-                      ),
+                    const SizedBox(height: AppTheme.paddingSmall),
+                    CupertinoButton(
+                      color: CupertinoColors.destructiveRed,
+                      onPressed: _resetImage,
+                      child: const Text('Try Again'),
                     ),
                   ],
                 ),

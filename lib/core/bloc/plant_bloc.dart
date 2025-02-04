@@ -179,10 +179,10 @@ class PlantBloc extends Bloc<PlantEvent, PlantState> {
       await plantBox.put(event.plant.id, event.plant);
       final plants = plantBox.values.toList();
       emit(PlantsLoaded(plants));
+      add(LoadPlants());
     } catch (e) {
-      final plants = plantBox.values.toList();
       emit(PlantOperationFailure(e.toString()));
-      emit(PlantsLoaded(plants));
+      add(LoadPlants());
     }
   }
 
@@ -192,10 +192,10 @@ class PlantBloc extends Bloc<PlantEvent, PlantState> {
       await plantBox.put(event.plant.id, event.plant);
       final plants = plantBox.values.toList();
       emit(PlantsLoaded(plants));
+      add(LoadPlants());
     } catch (e) {
       emit(PlantOperationFailure(e.toString()));
-      final plants = plantBox.values.toList();
-      emit(PlantsLoaded(plants));
+      add(LoadPlants());
     }
   }
 
@@ -205,10 +205,10 @@ class PlantBloc extends Bloc<PlantEvent, PlantState> {
       await plantBox.delete(event.plantId);
       final plants = plantBox.values.toList();
       emit(PlantsLoaded(plants));
+      add(LoadPlants());
     } catch (e) {
       emit(PlantOperationFailure(e.toString()));
-      final plants = plantBox.values.toList();
-      emit(PlantsLoaded(plants));
+      add(LoadPlants());
     }
   }
 
@@ -225,11 +225,11 @@ class PlantBloc extends Bloc<PlantEvent, PlantState> {
         emit(PlantsLoaded(plants));
       } else {
         emit(const PlantOperationFailure('Plant not found'));
+        add(LoadPlants());
       }
     } catch (e) {
       emit(PlantOperationFailure(e.toString()));
-      final plants = plantBox.values.toList();
-      emit(PlantsLoaded(plants));
+      add(LoadPlants());
     }
   }
 
@@ -246,13 +246,11 @@ class PlantBloc extends Bloc<PlantEvent, PlantState> {
         emit(PlantsLoaded(plants));
       } else {
         emit(const PlantOperationFailure('Plant not found'));
-        final plants = plantBox.values.toList();
-        emit(PlantsLoaded(plants));
+        add(LoadPlants());
       }
     } catch (e) {
       emit(PlantOperationFailure(e.toString()));
-      final plants = plantBox.values.toList();
-      emit(PlantsLoaded(plants));
+      add(LoadPlants());
     }
   }
 
@@ -264,10 +262,10 @@ class PlantBloc extends Bloc<PlantEvent, PlantState> {
     try {
       final result = await aiService.identifyPlant(event.imagePath);
       emit(PlantRecognized(result));
+      add(LoadPlants());
     } catch (e) {
       emit(PlantOperationFailure(e.toString()));
-      final plants = plantBox.values.toList();
-      emit(PlantsLoaded(plants));
+      add(LoadPlants());
     }
   }
 
@@ -284,13 +282,14 @@ class PlantBloc extends Bloc<PlantEvent, PlantState> {
           plant.lightingRecommendations,
         );
         emit(LightingRecommendationsLoaded(recommendations));
+        add(LoadPlants());
       } else {
         emit(const PlantOperationFailure('Plant not found'));
+        add(LoadPlants());
       }
     } catch (e) {
       emit(PlantOperationFailure(e.toString()));
-      final plants = plantBox.values.toList();
-      emit(PlantsLoaded(plants));
+      add(LoadPlants());
     }
   }
 
@@ -314,8 +313,7 @@ class PlantBloc extends Bloc<PlantEvent, PlantState> {
       }
     } catch (e) {
       emit(PlantOperationFailure(e.toString()));
-      final plants = plantBox.values.toList();
-      emit(PlantsLoaded(plants));
+      add(LoadPlants());
     }
   }
 }
