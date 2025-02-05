@@ -200,18 +200,6 @@ class _RecognitionResultsSheetState extends State<RecognitionResultsSheet> {
             title: 'Scientific Name',
             content: identification['species'] ?? 'Unknown',
           ),
-          // const SizedBox(height: AppTheme.paddingSmall),
-          // _buildDetailItem(
-          //   icon: CupertinoIcons.tree,
-          //   title: 'Family',
-          //   content: identification['family'] ?? 'Unknown',
-          // ),
-          // const SizedBox(height: AppTheme.paddingSmall),
-          // _buildDetailItem(
-          //   icon: CupertinoIcons.globe,
-          //   title: 'Native Region',
-          //   content: identification['native_region'] ?? 'Unknown',
-          // ),
         ],
       ),
     ).animate().fadeIn(
@@ -254,13 +242,6 @@ class _RecognitionResultsSheetState extends State<RecognitionResultsSheet> {
             content: careGuide['temperature'] ??
                 'No temperature information available',
           ),
-          // const SizedBox(height: AppTheme.paddingSmall),
-          // _buildCareItem(
-          //   icon: CupertinoIcons.arrow_up_arrow_down,
-          //   title: 'Humidity',
-          //   content:
-          //       careGuide['humidity'] ?? 'No humidity information available',
-          // ),
           const SizedBox(height: AppTheme.paddingSmall),
           _buildCareItem(
             icon: CupertinoIcons.layers_alt,
@@ -447,6 +428,12 @@ class _RecognitionResultsSheetState extends State<RecognitionResultsSheet> {
           ],
         ),
       );
+
+      setState(() {
+        _nameController.clear();
+        widget.results.clear();
+        _confidence = 0.0;
+      });
     } catch (e) {
       showCupertinoDialog(
         context: context,

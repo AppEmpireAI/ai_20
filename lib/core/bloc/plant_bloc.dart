@@ -262,7 +262,7 @@ class PlantBloc extends Bloc<PlantEvent, PlantState> {
     try {
       final result = await aiService.identifyPlant(event.imagePath);
       emit(PlantRecognized(result));
-      add(LoadPlants());
+      // add(LoadPlants());
     } catch (e) {
       emit(PlantOperationFailure(e.toString()));
       add(LoadPlants());
@@ -282,7 +282,7 @@ class PlantBloc extends Bloc<PlantEvent, PlantState> {
           plant.lightingRecommendations,
         );
         emit(LightingRecommendationsLoaded(recommendations));
-        add(LoadPlants());
+        // add(LoadPlants());
       } else {
         emit(const PlantOperationFailure('Plant not found'));
         add(LoadPlants());
